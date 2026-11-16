@@ -230,6 +230,48 @@ def analyze():
         return redirect(url_for("index"))
 
 
+@app.route("/api/predict", methods=["POST"])
+def api_predict():
+    """
+    REST API endpoint for third-party integrations (e.g., Instagram Webhooks, Chrome Extensions).
+    Accepts JSON:
+        { "text": "comment string", "model": "logistic_regression" (optional) }
+    Returns JSON:
+        { "status": "success", "prediction": "Bullying"|"Non-Bullying", "confidence": float, "should_hide": bool }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        raw_text = data.get("text", "")
+        requested_model = data.get("model", predictor.model_type).strip().lower()
+
+        if not raw_text or not raw_text.strip():
+            return jsonify({"status": "error", "message": "Text payload is empty"}), 400
+
+        if requested_model not in SUPPORTED_MODELS:
+            requested_model = predictor.model_type
+
+        # Model instance
+        if requested_model == predictor.model_type:
+            active_predictor = predictor
+        else:
+            active_predictor = CyberbullyingPredictor(model_type=requested_model)
+
+        result = active_predictor.predict(raw_text)
+        is_bullying = result["prediction"] == "Bullying"
+
+        return jsonify({
+            "status": "success",
+            "text": raw_text,
+            "prediction": result["prediction"],
+            "confidence": result["confidence"],
+            "should_hide": is_bullying,
+            "model_type": result["model_type"]
+        }), 200
+    except Exception as e:
+        logger.error(f"API prediction error: {e}", exc_info=True)
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @app.route("/history", methods=["GET"])
 def history():
     """Renders historical classification records stored in SQLite."""
