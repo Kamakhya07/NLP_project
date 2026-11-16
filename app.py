@@ -32,6 +32,9 @@ from flask import (
 
 # Import predictor from src.predict as required
 from src.predict import CyberbullyingPredictor
+from src.genai_explainer import GenAIExplainer
+
+genai_service = GenAIExplainer()
 
 # ------------------------------------------------------------------------------
 # Logging Setup
@@ -210,6 +213,9 @@ def analyze():
         record_id = cursor.lastrowid
         conn.close()
 
+        # Generative AI & Prompt Engineering Linguistic Analysis
+        genai_data = genai_service.explain_and_rewrite(raw_text, is_bullying)
+
         # Render result page
         return render_template(
             "result.html",
@@ -221,7 +227,8 @@ def analyze():
             probabilities=probabilities,
             model_type=model_name_used,
             record_id=record_id,
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            genai=genai_data
         )
 
     except Exception as err:
@@ -270,6 +277,12 @@ def api_predict():
     except Exception as e:
         logger.error(f"API prediction error: {e}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/poster", methods=["GET"])
+def poster():
+    """Renders the publication-ready academic project poster."""
+    return render_template("poster.html")
 
 
 @app.route("/history", methods=["GET"])

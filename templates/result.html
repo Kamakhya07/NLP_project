@@ -114,6 +114,54 @@
                         {% endif %}
                     </div>
 
+                    <!-- Generative AI & Prompt Engineering Section -->
+                    {% if genai %}
+                    <div class="card bg-surface-dark border border-primary-subtle p-3 rounded-3 mb-4 text-light shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary-subtle">
+                            <span class="fw-bold text-info d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles text-primary"></i> GenAI Linguistic Analysis & Counter-Speech
+                            </span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill small">
+                                Few-Shot CoT Prompting
+                            </span>
+                        </div>
+                        
+                        <div class="mb-2 small">
+                            <span class="text-secondary fw-semibold">Toxicity Category:</span>
+                            <span class="badge {% if is_bullying %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-success-subtle text-success border border-success-subtle{% endif %} ms-1">
+                                {{ genai.toxicity_category }}
+                            </span>
+                        </div>
+
+                        <div class="mb-2 small">
+                            <span class="text-secondary fw-semibold">Linguistic Reasoning (XAI):</span>
+                            <p class="mb-0 text-light fst-italic ps-2 border-start border-2 border-info mt-1">{{ genai.linguistic_reasoning }}</p>
+                        </div>
+
+                        {% if is_bullying %}
+                        <div class="mb-2 p-2 rounded bg-dark border border-secondary-subtle small">
+                            <div class="text-success fw-semibold"><i class="fa-solid fa-heart me-1"></i> Empathetic Counter-Speech:</div>
+                            <div class="text-light-emphasis">{{ genai.counter_speech }}</div>
+                        </div>
+
+                        <div class="mb-2 p-2 rounded bg-dark border border-secondary-subtle small">
+                            <div class="text-info fw-semibold"><i class="fa-solid fa-pen-fancy me-1"></i> Constructive Non-Violent Rephrase:</div>
+                            <div class="text-light-emphasis">{{ genai.polite_rephrase }}</div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Prompt Details Collapsible -->
+                        <div class="mt-2 pt-2 border-top border-secondary-subtle">
+                            <button class="btn btn-sm btn-outline-info rounded-pill py-0 px-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#promptCollapse" aria-expanded="false">
+                                <i class="fa-solid fa-code me-1"></i> View Few-Shot Engineered Prompt
+                            </button>
+                            <div class="collapse mt-2" id="promptCollapse">
+                                <pre class="p-2 rounded bg-black border border-secondary-subtle text-info small mb-0 font-monospace" style="max-height: 200px; overflow-y: auto;">{{ genai.engineered_prompt }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Warning Disclaimer -->
                     <div class="alert alert-warning border border-warning-subtle d-flex align-items-start gap-3 p-3 rounded-3 mb-4 disclaimer-alert" role="alert">
                         <i class="fa-solid fa-triangle-exclamation fs-4 text-warning flex-shrink-0 mt-1"></i>

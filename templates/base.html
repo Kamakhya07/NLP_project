@@ -55,6 +55,11 @@
                             <i class="fa-solid fa-chart-pie me-1"></i> Dashboard
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 rounded-pill {% if request.endpoint == 'poster' %}active{% endif %}" href="{{ url_for('poster') }}">
+                            <i class="fa-solid fa-file-powerpoint me-1 text-warning"></i> Project Poster
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="d-flex align-items-center ms-lg-3 gap-2">
