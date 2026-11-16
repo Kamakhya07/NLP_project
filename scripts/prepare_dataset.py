@@ -1,169 +1,129 @@
 """
-Enhanced Dataset generator and initializer for Cyberbullying Detection Project.
-Generates a realistic social media corpus with binary labels (0: Non-Bullying, 1: Bullying)
-with ~25,000-30,000 samples.
+Robust Dataset Ingestion and Preprocessing Pipeline.
+Combines benchmark social media offensive/bullying tweets (CardiffNLP TweetEval)
+with balanced conversational, supportive, and offensive samples to eliminate
+spurious lexical correlation (e.g. pronoun bias on 'you' or 'like').
 """
 
 import os
+import re
 import random
+import logging
+from pathlib import Path
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
+from datasets import load_dataset
 
-os.makedirs("data", exist_ok=True)
-random.seed(42)
-np.random.seed(42)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
-bully_intros = [
-    "You are so stupid and useless", "Get lost you pathetic loser", "Nobody cares about your opinion",
-    "You are the ugliest person ever", "Go away and never come back", "Everyone is laughing at you",
-    "I hope you fail miserably", "Stop posting your cringe garbage", "You are completely worthless",
-    "Shut the hell up already", "You're so dumb it actually hurts", "Why are you still trying",
-    "Look at this idiot trying to sound smart", "You look disgusting in that photo", "You have the IQ of a brick",
-    "Go cry about it loser", "Nobody wants you in this server", "Such an annoying crybaby",
-    "You are a total fraud and a fake", "Every word out of your mouth is idiocy", "Nobody would miss you",
-    "You look like a walking disaster", "Disgusting freak, stay in your lane", "You're a brainless moron",
-    "Keep crying you pathetic weakling", "Look at this clown, zero brains", "You are repulsive and annoying",
-    "Honestly just delete yourself", "Sick of this obnoxious troll", "You're fake, ugly, and unwanted",
-    "Absolute trash player, uninstall", "Your content is pure garbage", "Look at this loser flexing",
-    "You are a disgrace to humanity", "Stop breathing our air you burden", "Nobody will ever love you",
-    "You're such a freak, hide away", "Pathetic excuses from a coward", "I despise people like you",
-    "You deserve all the hate you get", "You make everyone sick to their stomach", "Total embarrassment of a person",
-    "Go jump off a cliff nobody cares", "Such a pathetic piece of trash", "You're an absolute joke to everyone",
-    "Delete your account and vanish", "Nobody asked for your worthless thoughts", "You bring nothing of value to this world",
-    "Can't stand your ugly face anymore", "You are nothing and will always be nothing"
-]
+RANDOM_SEED = 42
+random.seed(RANDOM_SEED)
+np.random.seed(RANDOM_SEED)
 
-bully_connectors = [
-    ", nobody likes you at all", ", why do you even exist", ", shut your mouth",
-    ", delete your account now", ", absolute trash human being", ", complete clown",
-    ", you don't deserve anything good", ", you embarrass yourself every single day",
-    ", waste of oxygen", ", seriously nobody asked you", ", read a book fool",
-    ", you have zero talent and zero friends", ", absolute joke of a person",
-    ", stay mad loser", ", go educate yourself", ", you'll always be a failure",
-    ", leave immediately and don't come back", ", grow up and stop whining",
-    ", sick and tired of your nonsense", ", stop breathing our air"
-]
+BASE_DIR = Path("D:/TY/NLP-project")
+RAW_DIR = BASE_DIR / "dataset" / "raw"
+PROCESSED_DIR = BASE_DIR / "dataset" / "processed"
+DATA_DIR = BASE_DIR / "data"
 
-non_bully_intros = [
-    "Had such an amazing time today", "Just finished reading a fantastic book", "What a great match tonight",
-    "Does anyone have good recommendations for", "Really excited about the new project", "Enjoying a peaceful afternoon with",
-    "Don't forget to stay hydrated and", "This presentation was tough but", "Learning Python and NLP has been",
-    "Can't wait for the weekend to", "The sunset today was absolutely breathtaking", "Thank you so much for helping me with",
-    "Working hard on the new milestones", "Congratulations on your graduation and", "Damn this food is crazy good",
-    "Happy birthday! Hope you have", "Cooking dinner tonight from scratch:", "Always remember to be kind and",
-    "Just adopted a sweet puppy from", "Attended an insightful webinar about", "That workout was brutal but",
-    "The new indie game soundtrack is", "Great discussion during the seminar about", "Looking forward to the conference on",
-    "Appreciate all the positive feedback on", "Finally finished my assignment today,", "Coffee tastes extra good today with",
-    "Shoutout to my mentor for always", "Technology is evolving so rapidly in", "Just got my research paper accepted for",
-    "Listening to lo-fi beats while", "Kindness is free, let's share", "Throwback to our beach vacation with",
-    "A clean workspace really helps with", "Excited to start my new internship at", "Shoutout to everyone working hard on",
-    "Gardening on the balcony is so", "That movie plot twist had me", "The library is so quiet and peaceful for",
-    "Wishing everyone a wonderful and"
-]
+for d in [RAW_DIR, PROCESSED_DIR, DATA_DIR]:
+    d.mkdir(parents=True, exist_ok=True)
 
-non_bully_connectors = [
-    ", grateful for everything in life", ", learned so many new concepts", ", incredible performance by everyone",
-    ", coffee spots in downtown area", ", proud of the entire team", ", hot tea and wonderful music",
-    ", take care of your mental health", ", we killed it and nailed every slide", ", such a rewarding journey so far",
-    ", go hiking in the mountains", ", nature is truly magnificent", ", the difficult research problem",
-    ", feeling very productive today", ", wishing you massive future success", ", definitely coming back here soon",
-    ", a wonderful celebration with loved ones", ", homemade pasta with fresh herbs", ", support others whenever you can",
-    ", the local animal shelter today", ", artificial intelligence ethics and safety", ", feeling so energized afterwards",
-    ", so relaxing and atmospheric", ", modern natural language processing methods", ", upcoming advancements in machine learning",
-    ", my open-source project release", ", time to relax with a good film", ", a warm croissant on a rainy morning",
-    ", providing valuable guidance and support", ", generative models and transformer architectures", ", publication in a peer-reviewed journal",
-    ", studying for upcoming semester exams", ", positive vibes and good energy", ", ocean breeze and sunny skies",
-    ", focus, clarity, and daily productivity", ", the tech research laboratory", ", their creative personal endeavors",
-    ", therapeutic, calming, and rewarding", ", completely amazed and emotionally moved", ", deep work and uninterrupted reading",
-    ", productive week ahead to all"
-]
+def clean_text_basic(text: str) -> str:
+    if not isinstance(text, str):
+        return ""
+    text = text.lower()
+    text = re.sub(r"https?://\S+|www\.\S+", " ", text)
+    text = re.sub(r"@\w+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
-mentions = ["@alex_99", "@jordan_k", "@sammy_t", "@taylor_dev", "@chris_m", "@morgan_lee", "@casey_b", "@user101", "@skyline_88", "@dev_guru", ""]
-bully_hashtags = ["#toxic", "#hate", "#drama", "#cyberbully", "#trash", "#roasted", "#fail", "#lame", "#sorrynotsorry", ""]
-non_bully_hashtags = ["#positivevibes", "#blessed", "#coding", "#gratitude", "#weekend", "#learning", "#nlp", "#datascience", "#tech", "#lifestyle", ""]
+def build_balanced_dataset():
+    logger.info("Loading CardiffNLP TweetEval Offensive benchmark dataset...")
+    ds_te = load_dataset("cardiffnlp/tweet_eval", "offensive")
+    
+    df_te_train = ds_te["train"].to_pandas()[["text", "label"]]
+    df_te_val = ds_te["validation"].to_pandas()[["text", "label"]]
+    df_te_test = ds_te["test"].to_pandas()[["text", "label"]]
+    df_te = pd.concat([df_te_train, df_te_val, df_te_test], ignore_index=True)
+    logger.info(f"Loaded {len(df_te)} records from TweetEval.")
 
-records = []
+    # High-quality natural conversational expressions to break spurious single-word biases
+    positive_phrases = [
+        "i like you", "i really like you", "i like you so much", "i like you a lot",
+        "i just like you", "i like you friend", "we all like you", "everyone likes you",
+        "i like your post", "i like your idea", "i like your vibe", "i like your profile",
+        "i like hanging out with you", "i like talking to you", "i like this so much",
+        "i love you", "i love you so much", "love you all", "i love this picture",
+        "you are amazing", "you are an amazing and kind person", "you are truly wonderful",
+        "you are the best friend ever", "you look great today", "you have a great smile",
+        "you did an awesome job today", "proud of you", "so proud of what you achieved",
+        "thank you so much for your help", "i appreciate you and your time", "thanks for being there for me",
+        "you are very smart and hardworking", "you inspire me every day", "wish you all the best",
+        "happy birthday to you", "hope you have a wonderful day", "congratulations to you",
+        "good luck with your exams", "you are welcome anytime", "glad to see you here",
+        "you are fantastic", "great to collaborate with you", "enjoy your weekend with friends",
+        "you are so sweet and helpful", "you have a wonderful family", "you did great in the presentation",
+        "had an amazing time collaborating with our study group today! so grateful for supportive friends."
+    ]
 
-# Generate ~15,000 bullying samples
-for intro in bully_intros:
-    for conn in bully_connectors:
-        for m in random.sample(mentions, 10):
-            h = random.choice(bully_hashtags)
-            text = f"{intro}{conn} {m} {h}".strip()
-            records.append({"text": text, "label": 1})
+    # Clear bullying/harassment samples with diverse syntaxes
+    bullying_phrases = [
+        "i hate you", "i hate you so much", "i hate your guts",
+        "i hate you, you are ugly and worthless", "you are so stupid and useless",
+        "nobody likes you get lost", "you are ugly and worthless",
+        "i will beat you up after school", "kill yourself pathetic loser",
+        "ur such a loser lmao go die", "shut up idiot nobody asked for your opinion",
+        "you have no friends and never will", "you are a complete waste of space",
+        "delete your account you clown", "you disgust me stay away",
+        "you are pathetic and weak", "everybody is laughing at how dumb you are",
+        "you deserve all the pain you get", "disgusting freak nobody cares about you",
+        "stop breathing our air trash", "you are the worst human being alive"
+    ]
 
-# Generate ~15,000 non-bullying samples
-for intro in non_bully_intros:
-    for conn in non_bully_connectors:
-        for m in random.sample(mentions, 10):
-            h = random.choice(non_bully_hashtags)
-            text = f"{intro}{conn} {m} {h}".strip()
-            records.append({"text": text, "label": 0})
+    extra_rows = []
+    for p in positive_phrases:
+        for _ in range(12):
+            extra_rows.append({"text": p, "label": 0})
+            extra_rows.append({"text": p + "!", "label": 0})
+            extra_rows.append({"text": "hey " + p, "label": 0})
 
-# Add diverse conversational and edge-case samples
-edge_cases = [
-    # Benign swear words / slang (Label: 0)
-    {"text": "Damn this new album is absolute fire, no cap!", "label": 0},
-    {"text": "Hell yeah, we finally crushed the final exam! Party time!", "label": 0},
-    {"text": "Bro you are an absolute beast in the gym, inspiring!", "label": 0},
-    {"text": "Holy shit that burger was huge, my stomach is exploding haha", "label": 0},
-    {"text": "I kick ass at Mario Kart, nobody can defeat my Yoshi!", "label": 0},
-    {"text": "Badass performance by the lead singer tonight, blown away!", "label": 0},
-    {"text": "Damn right we are going to celebrate tonight, promotion secured!", "label": 0},
-    {"text": "That movie was bloody brilliant, loved every single second of it", "label": 0},
-    {"text": "Get the fuck out of here, you actually won the lottery?! Congrats!", "label": 0},
-    {"text": "Shut up, no way you got tickets to that sold-out concert! So jealous!", "label": 0},
-    {"text": "Dude you killed it on stage tonight, what a badass performance!", "label": 0},
-    {"text": "This code is so damn clean, whoever wrote it is a genius.", "label": 0},
-    {"text": "I am so freaking excited for the weekend trip!", "label": 0},
+    for b in bullying_phrases:
+        for _ in range(10):
+            extra_rows.append({"text": b, "label": 1})
+            extra_rows.append({"text": b + "!", "label": 1})
 
-    # Subtle sarcasm / ironical harassment (Label: 1)
-    {"text": "Oh wow you're so smart, said literally no one ever in history.", "label": 1},
-    {"text": "Great job ruining the entire project for everyone, you're so talented.", "label": 1},
-    {"text": "Keep talking, maybe someday you'll say something intelligent.", "label": 1},
-    {"text": "I love how confident you are despite being completely wrong every time.", "label": 1},
-    {"text": "Did your brain take a vacation or did it never exist in the first place?", "label": 1},
-    {"text": "Congratulations on being the most annoying human alive.", "label": 1},
-    {"text": "You must be so proud of your zero achievements in life.", "label": 1},
-    {"text": "Wow what an inspiring post, please never post again.", "label": 1},
-    {"text": "You really thought you did something there didn't you, embarrassing.", "label": 1},
-    {"text": "Thanks for reminding us all why nobody invites you anywhere.", "label": 1},
+    df_extra = pd.DataFrame(extra_rows)
+    df_full = pd.concat([df_te, df_extra], ignore_index=True)
+    df_full = df_full.drop_duplicates(subset=["text"]).dropna()
+    df_full["clean_text"] = df_full["text"].apply(clean_text_basic)
+    df_full = df_full[df_full["clean_text"].str.len() > 1].reset_index(drop=True)
 
-    # Leetspeak and obfuscated abuse (Label: 1)
-    {"text": "u r such an 1di0t, go k1ll ur$elf loser", "label": 1},
-    {"text": "stfu u ugly b1tch nobody wants u here", "label": 1},
-    {"text": "l0ser alert, why dont u just d1e already", "label": 1},
-    {"text": "get out fkn tr@sh player, uninstall now", "label": 1},
-    {"text": "pathetic w0rthless scumb@g", "label": 1},
-    {"text": "d1e in a fire u useless clown", "label": 1},
-    {"text": "ur ugly and nob0dy loves u", "label": 1},
+    logger.info(f"Total dataset size after deduplication: {len(df_full)} samples")
+    logger.info(f"Class distribution:\n{df_full['label'].value_counts()}")
 
-    # Emojis and multimodal text (Label: 1)
-    {"text": "You look so gorgeous today 🤮🤮🤮 delete your face", "label": 1},
-    {"text": "Everyone thinks you're wonderful 🤡🤡 absolute clown", "label": 1},
-    {"text": "Such a genius 💩💩💩", "label": 1},
-    {"text": "Go die in a ditch 💀💀", "label": 1},
-    {"text": "Literal garbage human 🗑️🗑️🗑️ get lost", "label": 1},
+    # Stratified train (75%), val (12.5%), test (12.5%)
+    train_df, temp_df = train_test_split(
+        df_full, test_size=0.25, random_state=RANDOM_SEED, stratify=df_full["label"]
+    )
+    val_df, test_df = train_test_split(
+        temp_df, test_size=0.50, random_state=RANDOM_SEED, stratify=temp_df["label"]
+    )
 
-    # Implicit exclusion / passive aggressive (Label: 1)
-    {"text": "Notice how the room got quiet when you walked in? Take a hint.", "label": 1},
-    {"text": "We have a group chat without you for a reason.", "label": 1},
-    {"text": "Why do you even show up? Nobody invited you.", "label": 1},
-    {"text": "You're only here because people felt bad for you.", "label": 1},
-    {"text": "It's honestly sad watching you try so hard to fit in.", "label": 1},
-    {"text": "Don't bother speaking next time, nobody cares what you think.", "label": 1}
-]
+    logger.info(f"Train split: {len(train_df)}, Val split: {len(val_df)}, Test split: {len(test_df)}")
 
-for _ in range(100):
-    records.extend(edge_cases)
+    # Save to dataset/processed and data/
+    train_df.to_csv(PROCESSED_DIR / "train.csv", index=False)
+    val_df.to_csv(PROCESSED_DIR / "val.csv", index=False)
+    test_df.to_csv(PROCESSED_DIR / "test.csv", index=False)
 
-df = pd.DataFrame(records)
-df['text'] = df['text'].str.strip()
-df = df.drop_duplicates(subset=['text']).sample(frac=1.0, random_state=42).reset_index(drop=True)
+    train_df.to_csv(DATA_DIR / "processed_train.csv", index=False)
+    test_df.to_csv(DATA_DIR / "processed_test.csv", index=False)
+    df_full.to_csv(RAW_DIR / "cyberbullying_dataset.csv", index=False)
+    df_full.to_csv(DATA_DIR / "raw_dataset.csv", index=False)
 
-if len(df) > 30000:
-    df = df.iloc[:30000]
+    logger.info("Dataset files successfully saved to disk.")
 
-df.to_csv("data/raw_dataset.csv", index=False)
-print(f"Generated benchmark dataset saved to data/raw_dataset.csv with {len(df)} samples.")
-print("Class breakdown:\n", df['label'].value_counts())
+if __name__ == "__main__":
+    build_balanced_dataset()
