@@ -1,0 +1,53 @@
+{
+  "model_name": "Fine-Tuned DistilBERT",
+  "accuracy": 1.0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "macro_precision": 1.0,
+  "macro_recall": 1.0,
+  "macro_f1": 1.0,
+  "per_class": {
+    "Non-Bullying": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 1
+    },
+    "Bullying": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 3
+    }
+  },
+  "roc_auc": 1.0,
+  "training_parameters": {
+    "model_name": "distilbert/distilbert-base-uncased",
+    "epochs": 1,
+    "batch_size": 8,
+    "eval_batch_size": 8,
+    "learning_rate": 2e-05,
+    "weight_decay": 0.01,
+    "max_length": 128,
+    "seed": 42,
+    "device": "cpu",
+    "fp16": false,
+    "total_runtime_seconds": 34.52
+  },
+  "validation_metrics": {
+    "eval_loss": 0.6790791749954224,
+    "eval_accuracy": 0.75,
+    "eval_precision": 0.5,
+    "eval_recall": 1.0,
+    "eval_f1": 0.6666666666666666,
+    "eval_macro_precision": 0.75,
+    "eval_macro_recall": 0.8333333333333333,
+    "eval_macro_f1": 0.7333333333333334,
+    "eval_runtime": 0.5411,
+    "eval_samples_per_second": 7.392,
+    "eval_steps_per_second": 1.848,
+    "epoch": 1.0
+  },
+  "test_sample_count": 4
+}

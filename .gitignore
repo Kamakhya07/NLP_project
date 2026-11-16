@@ -1,0 +1,31 @@
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Python cache & compiled binaries
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Large PyTorch / Transformer checkpoint weights (>100MB limit on standard GitHub push)
+# DistilBERT can be fine-tuned via `python src/train_distilbert.py`
+models/distilbert/*.safetensors
+models/distilbert/checkpoints/
+*.pt
+*.pth
+*.bin
+
+# Local SQLite databases (tracked with empty .gitkeep)
+database/*.db
+!database/.gitkeep
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# System / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

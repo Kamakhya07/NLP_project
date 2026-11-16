@@ -1,0 +1,13 @@
+{
+  "Model": "Fine-Tuned DistilBERT",
+  "Accuracy": 0.9485,
+  "Macro Precision": 0.9512,
+  "Macro Recall": 0.9436,
+  "Macro F1": 0.9472,
+  "Weighted F1": 0.9483,
+  "Bullying Precision": 0.9458,
+  "Bullying Recall": 0.9405,
+  "Bullying F1": 0.9431,
+  "ROC-AUC": 0.9832,
+  "Training Time (s)": 184.5
+}

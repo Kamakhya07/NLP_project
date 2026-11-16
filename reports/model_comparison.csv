@@ -1,0 +1,4 @@
+Model,Accuracy,Precision,Recall,F1-Score,Macro-F1,ROC-AUC
+TF-IDF + LogisticRegression,0.8740,0.8333,0.8696,0.8511,0.8709,0.8722
+TF-IDF + LinearSVM,0.8960,0.8605,0.8937,0.8768,0.8934,0.8891
+Fine-tuned DistilBERT,0.9360,0.9108,0.9372,0.9238,0.9343,0.9407

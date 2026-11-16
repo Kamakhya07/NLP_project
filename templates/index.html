@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}CyberShield | Social Media Cyberbullying Detector{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Hero Section -->
+    <div class="row justify-content-center text-center mb-4">
+        <div class="col-lg-8">
+            <div class="hero-badge mb-3 d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill">
+                <span class="pulse-dot"></span>
+                <span class="fs-xs fw-semibold text-uppercase tracking-wider">Natural Language Processing System</span>
+            </div>
+            <h1 class="display-5 fw-extrabold text-light mb-2 hero-heading">
+                Cyberbullying Detection from <span class="gradient-text">Social Media</span>
+            </h1>
+            <p class="lead text-secondary mb-0 hero-subheading">
+                Analyze comments, tweets, and messages in real time using NLP machine learning models 
+                trained on social media datasets.
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Analyzer Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+
+            <div class="card analyzer-card shadow-lg border-0 mb-4">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-feather-pointed text-primary fs-5"></i>
+                            <h5 class="mb-0 fw-bold text-light">Input Social Media Comment</h5>
+                        </div>
+
+                        <!-- Model Selection Dropdown -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="modelSelect" class="form-label small text-secondary mb-0 d-none d-sm-inline">
+                                <i class="fa-solid fa-microchip me-1"></i> Model:
+                            </label>
+                            <select id="modelSelect" form="analyzerForm" name="model_type" class="form-select form-select-sm model-selector-dropdown">
+                                {% for key, label in supported_models.items() %}
+                                    <option value="{{ key }}" {% if key == current_model %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <form id="analyzerForm" action="{{ url_for('analyze') }}" method="POST">
+                        
+                        <!-- Textarea with Live Counter -->
+                        <div class="position-relative mb-3">
+                            <textarea 
+                                class="form-control analyzer-textarea p-3" 
+                                id="commentText" 
+                                name="text" 
+                                rows="6" 
+                                maxlength="{{ max_length }}" 
+                                placeholder="Paste or type a tweet, social media comment, post, or message here to detect toxicity and bullying..."
+                                required
+                            ></textarea>
+
+                            <div class="textarea-actions d-flex justify-content-between align-items-center px-2 pt-2">
+                                <button type="button" class="btn btn-link btn-sm text-secondary text-decoration-none p-0" id="clearTextBtn">
+                                    <i class="fa-solid fa-rotate-left me-1"></i> Clear text
+                                </button>
+                                
+                                <span class="char-counter text-secondary small" id="charCounter">
+                                    <span id="charCount">0</span> / {{ max_length }} characters
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button with Loading State -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary-gradient btn-lg fw-bold py-3 shadow analyze-btn" id="analyzeBtn">
+                                <span class="spinner-border spinner-border-sm me-2 d-none" id="analyzeSpinner" role="status" aria-hidden="true"></span>
+                                <span id="analyzeBtnText">
+                                    <i class="fa-solid fa-bolt me-2"></i> Analyze for Cyberbullying
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Example Prompts / Text Cards -->
+            <div class="card example-card shadow-sm border-0 mb-5">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-uppercase text-secondary fs-xs fw-bold tracking-wider">
+                            <i class="fa-solid fa-lightbulb text-warning me-1"></i> Click to Try Sample Comments
+                        </span>
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle small">
+                            Instant Fill
+                        </span>
+                    </div>
+
+                    <div class="row g-2">
+                        <!-- Example 1: Non-Bullying Positive -->
+                        <div class="col-md-6">
+                            <div class="sample-pill p-3 rounded-3 h-100" data-sample="Had an amazing time collaborating with our study group today! So grateful for supportive friends.">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle fs-xs">
+                                        <i class="fa-solid fa-check me-1"></i> Expected: Non-Bullying
+                                    </span>
+                                    <i class="fa-solid fa-arrow-turn-down text-secondary fs-xs"></i>
+                                </div>
+                                <p class="small text-secondary-emphasis mb-0 sample-text">
+                                    "Had an amazing time collaborating with our study group today! So grateful for supportive friends."
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Example 2: Bullying Harassment -->
+                        <div class="col-md-6">
+                            <div class="sample-pill p-3 rounded-3 h-100" data-sample="You are so pathetic and ugly, nobody likes you. Delete your account and disappear forever.">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-xs">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Expected: Bullying
+                                    </span>
+                                    <i class="fa-solid fa-arrow-turn-down text-secondary fs-xs"></i>
+                                </div>
+                                <p class="small text-secondary-emphasis mb-0 sample-text">
+                                    "You are so pathetic and ugly, nobody likes you. Delete your account and disappear forever."
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Example 3: Non-Bullying Constructive -->
+                        <div class="col-md-6">
+                            <div class="sample-pill p-3 rounded-3 h-100" data-sample="I respectfully disagree with the points made in your review, but I appreciate your perspective.">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle fs-xs">
+                                        <i class="fa-solid fa-check me-1"></i> Expected: Non-Bullying
+                                    </span>
+                                    <i class="fa-solid fa-arrow-turn-down text-secondary fs-xs"></i>
+                                </div>
+                                <p class="small text-secondary-emphasis mb-0 sample-text">
+                                    "I respectfully disagree with the points made in your review, but I appreciate your perspective."
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Example 4: Bullying Threat/Insult -->
+                        <div class="col-md-6">
+                            <div class="sample-pill p-3 rounded-3 h-100" data-sample="Keep talking and you will seriously regret showing your face anywhere near here, loser.">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-xs">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Expected: Bullying
+                                    </span>
+                                    <i class="fa-solid fa-arrow-turn-down text-secondary fs-xs"></i>
+                                </div>
+                                <p class="small text-secondary-emphasis mb-0 sample-text">
+                                    "Keep talking and you will seriously regret showing your face anywhere near here, loser."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Highlights Grid -->
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="feature-card p-3 rounded-3 h-100 text-center">
+                        <div class="feature-icon mb-2">
+                            <i class="fa-solid fa-brain text-primary fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold text-light mb-1">NLP Architecture</h6>
+                        <p class="small text-secondary mb-0">
+                            Evaluated across TF-IDF + Logistic Regression, Linear SVM, and Transformers (DistilBERT).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="feature-card p-3 rounded-3 h-100 text-center">
+                        <div class="feature-icon mb-2">
+                            <i class="fa-solid fa-bolt-lightning text-warning fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold text-light mb-1">Sub-Second Speed</h6>
+                        <p class="small text-secondary mb-0">
+                            Real-time inference optimized for production social network ingestion pipelines.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="feature-card p-3 rounded-3 h-100 text-center">
+                        <div class="feature-icon mb-2">
+                            <i class="fa-solid fa-lock text-success fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold text-light mb-1">Audited Privacy</h6>
+                        <p class="small text-secondary mb-0">
+                            Local SQLite history tracking with instant one-click data sanitization controls.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

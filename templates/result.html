@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Result | CyberShield{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+
+            <!-- Back to Analyzer Link -->
+            <div class="mb-3">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 back-btn">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Analyzer
+                </a>
+            </div>
+
+            <!-- Result Main Card -->
+            <div class="card result-card shadow-lg border-0 mb-4 overflow-hidden">
+                <!-- Top Status Header Strip -->
+                <div class="result-status-strip {% if is_bullying %}strip-danger{% else %}strip-success{% endif %}"></div>
+
+                <div class="card-body p-4 p-md-5">
+
+                    <!-- Model and Meta Bar -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 pb-3 border-bottom border-secondary-subtle">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-surface-dark border border-secondary-subtle text-light py-2 px-3 rounded-pill fs-xs">
+                                <i class="fa-solid fa-microchip text-primary me-1"></i> Model: <strong>{{ model_type }}</strong>
+                            </span>
+                            <span class="badge bg-surface-dark border border-secondary-subtle text-secondary py-2 px-3 rounded-pill fs-xs">
+                                <i class="fa-regular fa-clock me-1"></i> {{ timestamp }}
+                            </span>
+                        </div>
+                        {% if record_id %}
+                        <span class="badge bg-dark-subtle text-secondary border border-dark-subtle fs-xs">
+                            Record #{{ record_id }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Analyzed Text Display -->
+                    <div class="mb-4">
+                        <label class="form-label text-secondary small fw-bold text-uppercase tracking-wider d-flex align-items-center justify-content-between">
+                            <span><i class="fa-solid fa-quote-left text-primary me-2"></i> Analyzed Social Media Text</span>
+                            <span class="small text-secondary fw-normal">{{ text|length }} characters</span>
+                        </label>
+                        <div class="analyzed-text-box p-3 rounded-3 bg-surface-dark border border-secondary-subtle text-light">
+                            <p class="mb-0 text-break lead-text">{{ text }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Prediction Result Banner -->
+                    <div class="text-center py-4 px-3 rounded-4 mb-4 prediction-banner {% if is_bullying %}banner-danger{% else %}banner-success{% endif %}">
+                        <div class="prediction-icon-wrapper mb-2">
+                            {% if is_bullying %}
+                                <i class="fa-solid fa-triangle-exclamation text-danger display-3 animate-pulse"></i>
+                            {% else %}
+                                <i class="fa-solid fa-circle-check text-success display-3 animate-bounce"></i>
+                            {% endif %}
+                        </div>
+
+                        <div class="small text-uppercase fw-bold tracking-wider mb-1 {% if is_bullying %}text-danger-emphasis{% else %}text-success-emphasis{% endif %}">
+                            Classification Verdict
+                        </div>
+
+                        <h2 class="display-6 fw-extrabold mb-2 {% if is_bullying %}text-danger{% else %}text-success{% endif %}">
+                            {{ prediction }}
+                        </h2>
+
+                        <p class="mb-0 text-secondary small">
+                            {% if is_bullying %}
+                                This text contains patterns consistent with offensive, hostile, or harassing cyberbullying content.
+                            {% else %}
+                                This text appears constructive, positive, or benign with no harmful cyberbullying patterns detected.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Confidence Meter -->
+                    <div class="confidence-section p-4 rounded-3 bg-surface-dark border border-secondary-subtle mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-light d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-gauge-high text-info"></i> Model Confidence
+                            </span>
+                            <span class="badge {% if is_bullying %}bg-danger{% else %}bg-success{% endif %} fs-6 fw-extrabold px-3 py-1 rounded-pill">
+                                {{ confidence }}%
+                            </span>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="progress confidence-progress mb-3" style="height: 18px;" role="progressbar" aria-valuenow="{{ confidence }}" aria-valuemin="0" aria-valuemax="100">
+                            <div 
+                                class="progress-bar progress-bar-striped progress-bar-animated {% if is_bullying %}bg-danger-gradient{% else %}bg-success-gradient{% endif %}" 
+                                style="width: {{ confidence }}%;"
+                            ></div>
+                        </div>
+
+                        <!-- Probability Distribution Breakdown -->
+                        {% if probabilities %}
+                        <div class="row g-2 pt-2 border-top border-secondary-subtle small">
+                            <div class="col-6">
+                                <div class="d-flex justify-content-between text-secondary">
+                                    <span><i class="fa-solid fa-shield text-success me-1"></i> Non-Bullying:</span>
+                                    <strong class="text-light">{{ (probabilities['Non-Bullying'] * 100)|round(1) }}%</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="d-flex justify-content-between text-secondary">
+                                    <span><i class="fa-solid fa-skull-crossbones text-danger me-1"></i> Bullying:</span>
+                                    <strong class="text-light">{{ (probabilities['Bullying'] * 100)|round(1) }}%</strong>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Warning Disclaimer -->
+                    <div class="alert alert-warning border border-warning-subtle d-flex align-items-start gap-3 p-3 rounded-3 mb-4 disclaimer-alert" role="alert">
+                        <i class="fa-solid fa-triangle-exclamation fs-4 text-warning flex-shrink-0 mt-1"></i>
+                        <div class="small">
+                            <strong>Automated Prediction Advisory:</strong> 
+                            This prediction is produced probabilistically by machine learning algorithms. 
+                            AI models may occasionally misinterpret contextual nuances, cultural colloquialisms, sarcasm, or quoting. 
+                            Predictions are not definitive legal, disciplinary, or psychological assessments.
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap gap-2 justify-content-center pt-2">
+                        <a href="{{ url_for('index') }}" class="btn btn-primary-gradient px-4 py-2 fw-bold rounded-pill">
+                            <i class="fa-solid fa-magnifying-glass-plus me-2"></i> Analyze Another Comment
+                        </a>
+                        <a href="{{ url_for('history') }}" class="btn btn-outline-light px-4 py-2 fw-semibold rounded-pill">
+                            <i class="fa-solid fa-list-check me-2"></i> View History Log
+                        </a>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary px-3 py-2 fw-semibold rounded-pill">
+                            <i class="fa-solid fa-chart-column me-2"></i> Dashboard
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction History | CyberShield{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-xl-11">
+
+            <!-- Top Header & Actions -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                    <h2 class="h3 fw-bold text-light mb-1">
+                        <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Prediction History
+                    </h2>
+                    <p class="text-secondary small mb-0">
+                        Audit trail of processed social media texts stored in the local SQLite database.
+                    </p>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-surface-dark border border-secondary-subtle text-light px-3 py-2 rounded-pill small">
+                        Total Records: <strong class="text-primary">{{ total_count }}</strong>
+                    </span>
+
+                    {% if records and records|length > 0 %}
+                    <!-- Clear History Button with Modal Confirmation -->
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#clearHistoryModal">
+                        <i class="fa-solid fa-trash-can me-1"></i> Clear History
+                    </button>
+                    {% endif %}
+
+                    <a href="{{ url_for('index') }}" class="btn btn-primary-gradient btn-sm rounded-pill px-3">
+                        <i class="fa-solid fa-plus me-1"></i> New Analysis
+                    </a>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card history-card shadow-lg border-0 mb-4 overflow-hidden">
+                <div class="card-body p-0">
+                    {% if records and records|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 custom-history-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="text-secondary small fw-bold text-center" style="width: 70px;">#</th>
+                                    <th scope="col" class="text-secondary small fw-bold">Text Snippet</th>
+                                    <th scope="col" class="text-secondary small fw-bold text-center" style="width: 160px;">Prediction</th>
+                                    <th scope="col" class="text-secondary small fw-bold text-center" style="width: 140px;">Confidence</th>
+                                    <th scope="col" class="text-secondary small fw-bold d-none d-md-table-cell" style="width: 170px;">Model</th>
+                                    <th scope="col" class="text-secondary small fw-bold text-end" style="width: 170px;">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in records %}
+                                <tr>
+                                    <!-- ID -->
+                                    <td class="text-center text-secondary small fw-mono">
+                                        #{{ r['id'] }}
+                                    </td>
+
+                                    <!-- Text Snippet -->
+                                    <td>
+                                        <div class="text-snippet-wrapper text-light">
+                                            <span class="snippet-content" title="{{ r['text_snippet'] }}">
+                                                {{ r['text_snippet'] }}{% if r['text_snippet']|length >= 100 %}...{% endif %}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Prediction Badge -->
+                                    <td class="text-center">
+                                        {% if r['prediction'] == 'Bullying' %}
+                                            <span class="badge badge-bullying px-3 py-1 rounded-pill">
+                                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Bullying
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-safe px-3 py-1 rounded-pill">
+                                                <i class="fa-solid fa-circle-check me-1"></i> Non-Bullying
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Confidence Meter/Badge -->
+                                    <td class="text-center">
+                                        <div class="d-inline-flex align-items-center gap-1">
+                                            <span class="small fw-bold {% if r['prediction'] == 'Bullying' %}text-danger{% else %}text-success{% endif %}">
+                                                {{ r['confidence'] }}%
+                                            </span>
+                                        </div>
+                                        <div class="progress mt-1 mx-auto" style="height: 4px; width: 60px;">
+                                            <div class="progress-bar {% if r['prediction'] == 'Bullying' %}bg-danger{% else %}bg-success{% endif %}" style="width: {{ r['confidence'] }}%;"></div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Model -->
+                                    <td class="small text-secondary d-none d-md-table-cell">
+                                        <span class="badge bg-dark-subtle text-light border border-dark-subtle fs-xs">
+                                            {{ r['model_type'] }}
+                                        </span>
+                                    </td>
+
+                                    <!-- Time -->
+                                    <td class="text-end small text-secondary">
+                                        <i class="fa-regular fa-clock me-1 text-secondary-subtle"></i>
+                                        <span>{{ r['timestamp'] }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <!-- Empty State -->
+                    <div class="text-center py-5 px-4 empty-state-box">
+                        <div class="empty-icon-circle mx-auto mb-3">
+                            <i class="fa-solid fa-inbox text-secondary fs-2"></i>
+                        </div>
+                        <h4 class="fw-bold text-light mb-1">No Prediction History Found</h4>
+                        <p class="text-secondary small mb-4 max-w-sm mx-auto">
+                            No social media texts have been evaluated yet. Run your first analysis to start recording prediction records.
+                        </p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary-gradient px-4 py-2 rounded-pill fw-semibold">
+                            <i class="fa-solid fa-magnifying-glass me-2"></i> Analyze Text Now
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Clear History Confirmation Modal -->
+<div class="modal fade" id="clearHistoryModal" tabindex="-1" aria-labelledby="clearHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-surface-dark border border-danger-subtle text-light shadow-lg">
+            <div class="modal-header border-bottom border-secondary-subtle">
+                <h5 class="modal-title d-flex align-items-center gap-2 text-danger" id="clearHistoryModalLabel">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Clear Prediction History?
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-2">
+                    Are you sure you want to permanently delete all prediction records from the local SQLite database?
+                </p>
+                <div class="alert alert-danger-subtle border border-danger-subtle text-danger-emphasis small mb-0 rounded-3">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i>
+                    This action cannot be undone. All audit records and dashboard statistics will be reset.
+                </div>
+            </div>
+            <div class="modal-footer border-top border-secondary-subtle">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <form action="{{ url_for('clear_history') }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-trash-can me-1"></i> Yes, Clear History
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

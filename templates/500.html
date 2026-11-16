@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Internal Server Error | CyberShield{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-5">
+            <div class="error-illustration mb-4">
+                <i class="fa-solid fa-triangle-exclamation display-1 text-danger animate-pulse"></i>
+            </div>
+            <h1 class="display-3 fw-extrabold text-light mb-2">500</h1>
+            <h3 class="fw-bold text-light mb-3">Internal Server Error</h3>
+            <p class="text-secondary mb-4">
+                An internal server issue occurred while processing your request. Stack traces are masked for production security.
+            </p>
+            <div class="d-flex justify-content-center gap-2">
+                <a href="{{ url_for('index') }}" class="btn btn-primary-gradient rounded-pill px-4 py-2 fw-semibold">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Try Again
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold">
+                    <i class="fa-solid fa-chart-pie me-1"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{
+  "Model": "TF-IDF + Logistic Regression",
+  "Accuracy": 0.9994,
+  "Macro Precision": 0.9995,
+  "Macro Recall": 0.9993,
+  "Macro F1": 0.9994,
+  "Weighted F1": 0.9994,
+  "Bullying Precision": 1.0,
+  "Bullying Recall": 0.9985,
+  "Bullying F1": 0.9993,
+  "ROC-AUC": 1.0,
+  "Training Time (s)": 1.45
+}
