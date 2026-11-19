@@ -1,0 +1,29 @@
+{
+  "Logistic Regression": {
+    "Accuracy": 0.7421,
+    "Macro F1": 0.7129,
+    "Macro Precision": 0.7127,
+    "Macro Recall": 0.7132,
+    "ROC-AUC": 0.8082,
+    "Latency (ms/sample)": 0.0004,
+    "Samples Evaluated": 35640
+  },
+  "Linear SVM": {
+    "Accuracy": 0.7145,
+    "Macro F1": 0.7078,
+    "Macro Precision": 0.7175,
+    "Macro Recall": 0.7423,
+    "ROC-AUC": 0.8033,
+    "Latency (ms/sample)": 0.0015,
+    "Samples Evaluated": 35640
+  },
+  "Fine-Tuned DistilBERT": {
+    "Accuracy": 0.585,
+    "Macro F1": 0.5822,
+    "Macro Precision": 0.5873,
+    "Macro Recall": 0.585,
+    "ROC-AUC": 0.6412,
+    "Latency (ms/sample)": 78.1924,
+    "Samples Evaluated": 2000
+  }
+}

@@ -38,6 +38,40 @@
                         {% endif %}
                     </div>
 
+                    <!-- Analyzed Text Display or Screenshot OCR Preview -->
+                    {% if is_screenshot and screenshot_url %}
+                    <div class="card bg-surface-dark border border-warning-subtle p-3 rounded-3 mb-4 text-light shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary-subtle">
+                            <span class="fw-bold text-warning d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-camera-retro text-warning"></i> Uploaded Social Media Screenshot
+                            </span>
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 rounded-pill small">
+                                <i class="fa-solid fa-bolt me-1"></i> Windows Native OCR
+                            </span>
+                        </div>
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-5 text-center">
+                                <a href="{{ screenshot_url }}" target="_blank" title="Click to view full image">
+                                    <img src="{{ screenshot_url }}" alt="Screenshot" class="img-fluid rounded border border-secondary shadow-sm" style="max-height: 200px;">
+                                </a>
+                                <div class="mt-1 small text-secondary">Click image to expand</div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="small fw-semibold text-warning mb-1">
+                                    <i class="fa-solid fa-file-lines me-1"></i> Extracted Text by OCR:
+                                </div>
+                                <div class="p-2 rounded bg-black border border-secondary-subtle text-light small font-monospace" style="max-height: 160px; overflow-y: auto;">
+                                    {{ text }}
+                                </div>
+                                {% if ocr_meta %}
+                                <div class="mt-2 text-secondary fs-xs">
+                                    Detected: {{ ocr_meta.word_count }} words across {{ ocr_meta.lines|length }} line(s)
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
                     <!-- Analyzed Text Display -->
                     <div class="mb-4">
                         <label class="form-label text-secondary small fw-bold text-uppercase tracking-wider d-flex align-items-center justify-content-between">
@@ -48,6 +82,7 @@
                             <p class="mb-0 text-break lead-text">{{ text }}</p>
                         </div>
                     </div>
+                    {% endif %}
 
                     <!-- Prediction Result Banner -->
                     <div class="text-center py-4 px-3 rounded-4 mb-4 prediction-banner {% if is_bullying %}banner-danger{% else %}banner-success{% endif %}">
@@ -113,6 +148,50 @@
                         </div>
                         {% endif %}
                     </div>
+
+                    <!-- Explainable AI (XAI) Token Attribution Section -->
+                    {% if xai_tokens and xai_tokens.available %}
+                    <div class="card bg-surface-dark border border-warning-subtle p-3 rounded-3 mb-4 text-light shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary-subtle">
+                            <span class="fw-bold text-warning d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-brain text-warning"></i> Token-Level Explainability (LIME-Style Attribution)
+                            </span>
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 rounded-pill small">
+                                Feature Importance
+                            </span>
+                        </div>
+                        <p class="text-secondary small mb-3">
+                            Visualizing how each token mathematically influences the model's verdict. 
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-1">Red</span> indicates offensive/bullying indicators, 
+                            while <span class="badge bg-success-subtle text-success border border-success-subtle px-1">Green</span> indicates benign/mitigating context.
+                        </p>
+                        <div class="p-3 rounded bg-dark border border-secondary-subtle d-flex flex-wrap gap-2 align-items-center">
+                            {% for token in xai_tokens.tokens %}
+                                {% if token.direction == 'bullying' %}
+                                    <span class="badge bg-danger text-light fs-6 px-2 py-1 d-inline-flex align-items-center gap-1 shadow-sm" title="Bullying Weight: +{{ token.weight }} ({{ token.impact_pct }}% relative impact)">
+                                        {{ token.word }} <small class="text-warning-emphasis fw-bold" style="font-size: 0.7em;">+{{ token.impact_pct }}%</small>
+                                    </span>
+                                {% elif token.direction == 'supportive' %}
+                                    <span class="badge bg-success text-light fs-6 px-2 py-1 d-inline-flex align-items-center gap-1 shadow-sm" title="Mitigating Weight: {{ token.weight }} ({{ token.impact_pct }}% relative impact)">
+                                        {{ token.word }} <small class="text-light fw-bold" style="font-size: 0.7em;">-{{ token.impact_pct }}%</small>
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-light-emphasis fs-6 px-2 py-1 border border-secondary-subtle" title="Neutral token">
+                                        {{ token.word }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% if xai_tokens.top_positive %}
+                        <div class="mt-2 small text-secondary">
+                            <strong class="text-danger">Key Toxicity Triggers:</strong>
+                            {% for trigger in xai_tokens.top_positive %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle me-1">{{ trigger.word }} ({{ trigger.impact_pct }}%)</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
 
                     <!-- Generative AI & Prompt Engineering Section -->
                     {% if genai %}

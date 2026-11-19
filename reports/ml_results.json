@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-11-16T14:42:56.212742+00:00",
-  "pipeline_duration_seconds": 12.68,
+  "timestamp": "2026-11-19T08:37:47.755551+00:00",
+  "pipeline_duration_seconds": 4.51,
   "random_seed": 42,
   "hyperparameter_tuning_enabled": false,
   "dataset_summary": {
     "train_samples": 10672,
     "val_samples": 1779,
     "test_samples": 1779,
-    "vocabulary_size": 39256,
+    "vocabulary_size": 28155,
     "label_distribution_test": {
       "Non-Bullying": 1195,
       "Bullying": 584
@@ -27,54 +27,54 @@
       "random_state": 42
     },
     "validation_metrics": {
-      "accuracy": 0.7369,
-      "precision": 0.6,
-      "recall": 0.5959,
-      "f1": 0.5979,
-      "macro_precision": 0.7016,
-      "macro_recall": 0.7009,
-      "macro_f1": 0.7012,
+      "accuracy": 0.7392,
+      "precision": 0.6034,
+      "recall": 0.5993,
+      "f1": 0.6014,
+      "macro_precision": 0.7041,
+      "macro_recall": 0.7034,
+      "macro_f1": 0.7038,
       "per_class": {
         "Non-Bullying": {
-          "precision": 0.8032,
-          "recall": 0.8059,
-          "f1": 0.8045,
+          "precision": 0.8048,
+          "recall": 0.8075,
+          "f1": 0.8062,
           "support": 1195
         },
         "Bullying": {
-          "precision": 0.6,
-          "recall": 0.5959,
-          "f1": 0.5979,
+          "precision": 0.6034,
+          "recall": 0.5993,
+          "f1": 0.6014,
           "support": 584
         }
       },
-      "roc_auc": 0.7812,
+      "roc_auc": 0.7819,
       "model_name": "Logistic Regression",
       "split": "Validation"
     },
     "test_metrics": {
-      "accuracy": 0.7381,
-      "precision": 0.6089,
-      "recall": 0.5651,
-      "f1": 0.5861,
-      "macro_precision": 0.7018,
-      "macro_recall": 0.6938,
-      "macro_f1": 0.6973,
+      "accuracy": 0.7437,
+      "precision": 0.619,
+      "recall": 0.5702,
+      "f1": 0.5936,
+      "macro_precision": 0.7084,
+      "macro_recall": 0.6993,
+      "macro_f1": 0.7032,
       "per_class": {
         "Non-Bullying": {
-          "precision": 0.7947,
-          "recall": 0.8226,
-          "f1": 0.8084,
+          "precision": 0.7977,
+          "recall": 0.8285,
+          "f1": 0.8128,
           "support": 1195
         },
         "Bullying": {
-          "precision": 0.6089,
-          "recall": 0.5651,
-          "f1": 0.5861,
+          "precision": 0.619,
+          "recall": 0.5702,
+          "f1": 0.5936,
           "support": 584
         }
       },
-      "roc_auc": 0.7743,
+      "roc_auc": 0.7792,
       "model_name": "Logistic Regression",
       "split": "Test"
     },
@@ -89,54 +89,54 @@
     },
     "calibration": "CalibratedClassifierCV(method='sigmoid')",
     "validation_metrics": {
-      "accuracy": 0.7544,
-      "precision": 0.687,
-      "recall": 0.4623,
-      "f1": 0.5527,
-      "macro_precision": 0.7302,
-      "macro_recall": 0.6797,
-      "macro_f1": 0.6917,
+      "accuracy": 0.7527,
+      "precision": 0.6915,
+      "recall": 0.4452,
+      "f1": 0.5417,
+      "macro_precision": 0.7303,
+      "macro_recall": 0.6741,
+      "macro_f1": 0.6862,
       "per_class": {
         "Non-Bullying": {
-          "precision": 0.7734,
-          "recall": 0.8971,
-          "f1": 0.8307,
+          "precision": 0.7691,
+          "recall": 0.9029,
+          "f1": 0.8306,
           "support": 1195
         },
         "Bullying": {
-          "precision": 0.687,
-          "recall": 0.4623,
-          "f1": 0.5527,
+          "precision": 0.6915,
+          "recall": 0.4452,
+          "f1": 0.5417,
           "support": 584
         }
       },
-      "roc_auc": 0.7732,
+      "roc_auc": 0.7726,
       "model_name": "Linear SVM",
       "split": "Validation"
     },
     "test_metrics": {
-      "accuracy": 0.7549,
-      "precision": 0.7176,
-      "recall": 0.4178,
-      "f1": 0.5281,
-      "macro_precision": 0.7407,
-      "macro_recall": 0.6687,
-      "macro_f1": 0.6813,
+      "accuracy": 0.7532,
+      "precision": 0.7101,
+      "recall": 0.4195,
+      "f1": 0.5274,
+      "macro_precision": 0.7369,
+      "macro_recall": 0.6679,
+      "macro_f1": 0.6802,
       "per_class": {
         "Non-Bullying": {
-          "precision": 0.7637,
-          "recall": 0.9197,
-          "f1": 0.8345,
+          "precision": 0.7636,
+          "recall": 0.9163,
+          "f1": 0.833,
           "support": 1195
         },
         "Bullying": {
-          "precision": 0.7176,
-          "recall": 0.4178,
-          "f1": 0.5281,
+          "precision": 0.7101,
+          "recall": 0.4195,
+          "f1": 0.5274,
           "support": 584
         }
       },
-      "roc_auc": 0.7664,
+      "roc_auc": 0.7708,
       "model_name": "Linear SVM",
       "split": "Test"
     },

@@ -24,11 +24,12 @@
 ## Part 2: Demonstration Against Evaluation Criteria (Rubric Points 2 to 7)
 
 ### Criterion 2: Text Extraction, Preprocessing & Vectorization
-- **Implementation:** [src/preprocessing.py](file:///D:/TY/NLP-project/src/preprocessing.py) and [notebooks/02_preprocessing.ipynb](file:///D:/TY/NLP-project/notebooks/02_preprocessing.ipynb).
+- **Implementation:** [src/preprocessing.py](file:///D:/TY/NLP-project/src/preprocessing.py), [src/ocr_detector.py](file:///D:/TY/NLP-project/src/ocr_detector.py), and [notebooks/02_preprocessing.ipynb](file:///D:/TY/NLP-project/notebooks/02_preprocessing.ipynb).
 - **Techniques Used:**
-  1. *Conservative Normalization:* Stripping noisy URLs (`http://...`) and platform user handles (`@user`) while deliberately preserving expressive punctuation (`!`, `?`) and emojis to retain affective tone.
-  2. *N-Gram Vectorization:* Scikit-Learn `TfidfVectorizer` extracting word unigrams, bigrams, and trigrams (`ngram_range=(1, 3)`, `min_df=2`, `max_features=50000`, `sublinear_tf=True`) producing **39,256 linguistic features**.
-  3. *Subword Tokenization:* DistilBERT WordPiece tokenizer (`max_length=128`, padding & truncation).
+  1. *Multimodal Screenshot Text Extraction (OCR):* Native Windows Media OCR engine (`src/ocr_detector.py`) extracting text from social media screenshots (WhatsApp, Instagram, Twitter/X, Reddit) with image contrast optimization.
+  2. *Conservative Normalization:* Stripping noisy URLs (`http://...`) and platform user handles (`@user`) while deliberately preserving expressive punctuation (`!`, `?`) and emojis to retain affective tone.
+  3. *N-Gram Vectorization:* Scikit-Learn `TfidfVectorizer` extracting word unigrams, bigrams, and trigrams (`ngram_range=(1, 3)`, `min_df=2`, `max_features=50000`, `sublinear_tf=True`) producing **39,256 linguistic features**.
+  4. *Subword Tokenization:* DistilBERT WordPiece tokenizer (`max_length=128`, padding & truncation).
 
 ### Criterion 3: Implementation of NLP Algorithms
 - **Implementation:** [src/train_ml.py](file:///D:/TY/NLP-project/src/train_ml.py) and [src/train_distilbert.py](file:///D:/TY/NLP-project/src/train_distilbert.py).
@@ -53,7 +54,11 @@
 ### Criterion 6 & 7: Methodology Explanation & Technical Contributions
 - **Methodology Handbook:** [project_report.md](file:///C:/Users/kamakhya/.gemini/antigravity/brain/427a81e8-851c-4696-8fdf-98977d784031/project_report.md).
 - **Oral Defense & Demo Playbook:** [presentation_and_demo_guide.md](file:///C:/Users/kamakhya/.gemini/antigravity/brain/427a81e8-851c-4696-8fdf-98977d784031/presentation_and_demo_guide.md).
-- **Key Technical Innovation:** Identified and eliminated **spurious lexical pronoun bias** (where harmless phrases like *"i like you"* were falsely penalized by naive bag-of-words models), achieving balanced conversational accuracy across trigram feature spaces.
+- **Key Technical Innovations:**
+  1. *Spurious Lexical Pronoun Bias Mitigation:* Identified and eliminated pronoun bias (where harmless phrases like *"i like you"* were falsely penalized by naive bag-of-words models), achieving balanced conversational accuracy across trigram feature spaces.
+  2. *External Out-of-Distribution (OOD) Validation:* Tested models on an external, completely unseen benchmark of **35,640 tweets** (Waseem & Hovy 2016 + Davidson et al. 2017) at [reports/ood_benchmark_report.md](file:///D:/TY/NLP-project/reports/ood_benchmark_report.md), achieving **74.21% OOD accuracy and 0.8082 ROC-AUC** without domain retraining.
+  3. *Token-Level Explainable AI (LIME-Style Local Attribution):* Implemented analytical linear feature attribution and occlusion sensitivity ([src/explainability.py](file:///D:/TY/NLP-project/src/explainability.py)) displaying word-by-word percentage contribution heatmaps directly in the web UI.
+  4. *Adversarial Robustness & Perturbation Testing:* Benchmarked model resilience against leetspeak (`b!tch`, `id10t`), elongated typos, and negation inversions ([reports/adversarial_robustness_report.md](file:///D:/TY/NLP-project/reports/adversarial_robustness_report.md)), proving 100% invariance on benign conversational expressions.
 
 ---
 
@@ -72,6 +77,13 @@
     ngrok http 5000
     ```
 - [x] **5. Project Poster:** High-resolution printable one-page poster available at `http://127.0.0.1:5000/poster` (Click *"Print / Save as PDF"*).
-- [x] **6. Output Screenshots:** High-res confusion matrices and comparison charts in `reports/figures/`.
-- [x] **7. Dataset Details:** CardiffNLP TweetEval Offensive benchmark documented in `dataset/`.
+- [x] **6. Output Screenshots & Evaluation Plots:** Stored in repository at `reports/figures/`
+  - In-Domain Confusion Matrix (Logistic Regression): `reports/figures/confusion_matrix_logistic_regression.png`
+  - In-Domain Confusion Matrix (Linear SVM): `reports/figures/confusion_matrix_svm.png`
+  - In-Domain Comparison Chart: `reports/figures/model_comparison_chart.png`
+  - **OOD External Benchmark Comparison Chart:** `reports/figures/ood_benchmark_comparison.png`
+  - **OOD Confusion Matrix (Logistic Regression):** `reports/figures/confusion_matrix_ood_logistic_regression.png`
+  - **OOD Confusion Matrix (Linear SVM):** `reports/figures/confusion_matrix_ood_svm.png`
+  - **Adversarial Robustness Benchmark Plot:** `reports/figures/adversarial_robustness_benchmark.png`
+- [x] **7. Dataset Details:** CardiffNLP TweetEval Offensive benchmark + External Waseem & Hovy & Davidson et al. OOD Benchmark (35,640 records in `dataset/external_ood/`).
 - [x] **8. AWS Certificate:** Downloaded PDF certificate to be placed in shared folder.

@@ -21,6 +21,10 @@ models/distilbert/checkpoints/
 database/*.db
 !database/.gitkeep
 
+# User uploaded screenshots from OCR interface
+static/uploads/*
+!static/uploads/.gitkeep
+
 # Jupyter notebook checkpoints
 .ipynb_checkpoints/
 
