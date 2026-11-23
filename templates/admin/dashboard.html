@@ -6,48 +6,46 @@
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
     <div>
         <h3 class="fw-bold mb-1" style="color: var(--coffee-darkest);">Admin Desk & Moderation Desk</h3>
-        <p class="text-secondary small mb-0">Platform Overview, AI interception moderation, user sanctions, and audit history.</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{{ url_for('admin_feed') }}" class="btn d-flex align-items-center gap-2 rounded-pill px-3 shadow-sm text-decoration-none" style="background-color: var(--olive-medium); color: #ffffff; font-weight: 600;">
-            <i class="fa-solid fa-feather-pointed"></i>
-            <span>Social Feed</span>
-        </a>
+        <p class="text-secondary small mb-0">Platform Overview, real-time cyberbullying interception, and system telemetry.</p>
     </div>
 </div>
 
-<!-- 4 Core SaaS KPI Cards (Solid Coffee, Olive & Beige Accents) -->
+<!-- 4 Core SaaS KPI Cards (Identical Height & Uniform Card Size) -->
 <div class="row g-4 mb-4">
     <!-- 1. Total Posts -->
     <div class="col-sm-6 col-xl-3">
-        <div class="kpi-card" style="border-top: 4px solid var(--coffee-warm);">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <span class="kpi-title" style="color: var(--coffee-muted);">Total Posts</span>
-                <div class="kpi-icon-wrapper" style="background-color: #f0e9dd; color: var(--coffee-dark);">
-                    <i class="fa-solid fa-comments"></i>
+        <div class="kpi-card h-100 d-flex flex-column justify-content-between" style="border-top: 4px solid var(--coffee-warm);">
+            <div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title" style="color: var(--coffee-muted);">Total Posts</span>
+                    <div class="kpi-icon-wrapper" style="background-color: #f0e9dd; color: var(--coffee-dark);">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
                 </div>
+                <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.total_posts }}</div>
             </div>
-            <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.total_posts }}</div>
-            <div class="d-flex align-items-center gap-2 mt-2">
+            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #f0e9dd !important;">
                 <span class="badge rounded-pill fw-semibold" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
                     <i class="fa-solid fa-circle-check me-1"></i> {{ analytics.published_posts }} Published
                 </span>
-                <span class="small text-muted">on feed</span>
+                <span class="small text-muted">on timeline</span>
             </div>
         </div>
     </div>
 
     <!-- 2. Flagged Posts -->
     <div class="col-sm-6 col-xl-3">
-        <div class="kpi-card" style="border-top: 4px solid var(--danger-color);">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <span class="kpi-title text-danger">Flagged Posts</span>
-                <div class="kpi-icon-wrapper" style="background-color: #faeaea; color: var(--danger-color);">
-                    <i class="fa-solid fa-shield-virus"></i>
+        <div class="kpi-card h-100 d-flex flex-column justify-content-between" style="border-top: 4px solid var(--danger-color);">
+            <div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title text-danger">Flagged Posts</span>
+                    <div class="kpi-icon-wrapper" style="background-color: #faeaea; color: var(--danger-color);">
+                        <i class="fa-solid fa-shield-virus"></i>
+                    </div>
                 </div>
+                <div class="kpi-val text-danger">{{ analytics.quarantined_posts }}</div>
             </div>
-            <div class="kpi-val text-danger">{{ analytics.quarantined_posts }}</div>
-            <div class="d-flex align-items-center gap-2 mt-2">
+            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #fce8e8 !important;">
                 <span class="badge rounded-pill fw-semibold" style="background-color: #faeaea; color: var(--danger-color); border: 1px solid #e8b8b8;">
                     <i class="fa-solid fa-clock me-1"></i> Awaiting Review
                 </span>
@@ -58,15 +56,17 @@
 
     <!-- 3. Total Users -->
     <div class="col-sm-6 col-xl-3">
-        <div class="kpi-card" style="border-top: 4px solid var(--olive-medium);">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <span class="kpi-title" style="color: var(--olive-dark);">Total Users</span>
-                <div class="kpi-icon-wrapper" style="background-color: #eaf0dd; color: var(--olive-dark);">
-                    <i class="fa-solid fa-users"></i>
+        <div class="kpi-card h-100 d-flex flex-column justify-content-between" style="border-top: 4px solid var(--olive-medium);">
+            <div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title" style="color: var(--olive-dark);">Total Users</span>
+                    <div class="kpi-icon-wrapper" style="background-color: #eaf0dd; color: var(--olive-dark);">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
                 </div>
+                <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.total_users }}</div>
             </div>
-            <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.total_users }}</div>
-            <div class="d-flex align-items-center gap-2 mt-2">
+            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #eaf0dd !important;">
                 <span class="badge rounded-pill fw-semibold" style="background-color: #eaf0dd; color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
                     <i class="fa-solid fa-user-check me-1"></i> {{ analytics.active_users }} Active
                 </span>
@@ -77,15 +77,17 @@
 
     <!-- 4. Blocked Users -->
     <div class="col-sm-6 col-xl-3">
-        <div class="kpi-card" style="border-top: 4px solid #82634a;">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <span class="kpi-title" style="color: var(--coffee-muted);">Blocked Users</span>
-                <div class="kpi-icon-wrapper" style="background-color: #f5efe6; color: var(--coffee-muted);">
-                    <i class="fa-solid fa-user-slash"></i>
+        <div class="kpi-card h-100 d-flex flex-column justify-content-between" style="border-top: 4px solid #82634a;">
+            <div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title" style="color: var(--coffee-muted);">Blocked Users</span>
+                    <div class="kpi-icon-wrapper" style="background-color: #f5efe6; color: var(--coffee-muted);">
+                        <i class="fa-solid fa-user-slash"></i>
+                    </div>
                 </div>
+                <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.blocked_users }}</div>
             </div>
-            <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.blocked_users }}</div>
-            <div class="d-flex align-items-center gap-2 mt-2">
+            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #f0e9dd !important;">
                 <span class="badge rounded-pill fw-semibold" style="background-color: #f0e9dd; color: var(--coffee-warm); border: 1px solid #ded5c5;">
                     <i class="fa-solid fa-ban me-1"></i> Suspended
                 </span>
@@ -95,10 +97,11 @@
     </div>
 </div>
 
+<!-- Middle Row: Symmetrical 50-50 Cards (Same Card Size & Structure) -->
 <div class="row g-4 mb-4">
-    <!-- Left Column: Pending Moderation Spotlight -->
-    <div class="col-lg-7">
-        <div class="saas-card p-4 h-100">
+    <!-- Left Column: Pending Moderation Queue -->
+    <div class="col-lg-6">
+        <div class="saas-card p-4 h-100 d-flex flex-column">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: var(--card-border) !important;">
                 <div>
                     <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
@@ -107,12 +110,12 @@
                     <span class="text-secondary small">Latest items intercepted by AI filter</span>
                 </div>
                 <a href="{{ url_for('admin_queue') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="color: var(--coffee-warm); border-color: var(--beige-border);">
-                    View Queue ({{ pending_quarantined_count }}) &rarr;
+                    View All ({{ pending_quarantined_count }}) &rarr;
                 </a>
             </div>
 
             {% if pending_posts_preview %}
-                <div class="d-flex flex-column gap-3">
+                <div class="d-flex flex-column gap-3 flex-grow-1">
                     {% for p in pending_posts_preview %}
                     <div class="p-3 rounded-3 border" style="background-color: #fdfbf7; border-color: var(--card-border) !important;">
                         <div class="d-flex align-items-center justify-content-between mb-2">
@@ -140,16 +143,13 @@
                                         <i class="fa-solid fa-trash me-1"></i> Reject
                                     </button>
                                 </form>
-                                <a href="{{ url_for('admin_queue') }}" class="btn btn-sm py-1 px-2 text-decoration-none rounded-pill" style="color: var(--coffee-warm); border: 1px solid var(--beige-border); font-size: 0.75rem;" title="Full XAI inspection">
-                                    Inspect &rarr;
-                                </a>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="p-5 text-center text-muted">
+                <div class="p-5 text-center text-muted flex-grow-1 d-flex flex-column justify-content-center">
                     <i class="fa-solid fa-circle-check fs-1 mb-3" style="color: var(--olive-medium);"></i>
                     <h6 class="fw-bold" style="color: var(--coffee-darkest);">Queue is Clear!</h6>
                     <p class="small text-muted mb-0">No intercepted cyberbullying comments currently require review.</p>
@@ -159,8 +159,8 @@
     </div>
 
     <!-- Right Column: Recent Activity Logs -->
-    <div class="col-lg-5">
-        <div class="saas-card p-4 h-100">
+    <div class="col-lg-6">
+        <div class="saas-card p-4 h-100 d-flex flex-column">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: var(--card-border) !important;">
                 <div>
                     <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
@@ -168,6 +168,10 @@
                     </h5>
                     <span class="text-secondary small">Latest moderation events</span>
                 </div>
+                <a href="{{ url_for('admin_activity') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="color: var(--coffee-warm); border-color: var(--beige-border);">
+                    View All &rarr;
+                </a>
+            </div>
                 <a href="{{ url_for('admin_activity') }}" class="small text-decoration-none fw-semibold" style="color: var(--coffee-warm);">View All</a>
             </div>
 

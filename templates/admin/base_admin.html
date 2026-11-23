@@ -177,62 +177,16 @@
         }
 
         .saas-topbar {
-            min-height: 64px;
+            height: 64px;
             background-color: #ffffff;
             border-bottom: 1px solid var(--card-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 24px;
+            padding: 0 32px;
             position: sticky;
             top: 0;
             z-index: 1030;
-            gap: 16px;
-        }
-
-        .topbar-nav-tabs {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            overflow-x: auto;
-            padding: 4px 0;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .topbar-nav-tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .topbar-nav-tab {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--coffee-muted);
-            text-decoration: none;
-            transition: all 0.15s ease;
-            white-space: nowrap;
-            border: 1px solid transparent;
-        }
-
-        .topbar-nav-tab:hover {
-            color: var(--coffee-darkest);
-            background-color: #f7f4ee;
-            border-color: var(--card-border);
-        }
-
-        .topbar-nav-tab.active {
-            color: #ffffff !important;
-            background-color: var(--olive-medium) !important;
-            border-color: var(--olive-dark) !important;
-        }
-
-        .topbar-nav-tab.active i {
-            color: #ffffff !important;
         }
 
         .saas-content-area {
@@ -408,18 +362,53 @@
             </div>
         </a>
 
-        <!-- Navigation Links: Strictly Admin Desk and Feed -->
+        <!-- Navigation Links: In Sidebar Only -->
         <ul class="sidebar-nav">
             <li class="sidebar-nav-item">
-                <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link {% if active_tab != 'feed' %}active{% endif %}">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>Admin Desk</span>
+                <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link {% if active_tab == 'dashboard' or not active_tab %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Overview</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_queue') }}" class="sidebar-link {% if active_tab == 'queue' %}active{% endif %} justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-shield-virus"></i>
+                        <span>Moderation Queue</span>
+                    </div>
+                    {% if pending_quarantined_count and pending_quarantined_count > 0 %}
+                    <span class="badge rounded-pill px-2" style="background-color: var(--danger-color); color: #ffffff; font-size: 0.72rem;">{{ pending_quarantined_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_users') }}" class="sidebar-link {% if active_tab == 'users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>User Management</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_analytics') }}" class="sidebar-link {% if active_tab == 'analytics' %}active{% endif %}">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>AI Analytics</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_activity') }}" class="sidebar-link {% if active_tab == 'activity' %}active{% endif %}">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Activity Logs</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_settings') }}" class="sidebar-link {% if active_tab == 'settings' %}active{% endif %}">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Settings</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="{{ url_for('admin_feed') }}" class="sidebar-link {% if active_tab == 'feed' %}active{% endif %}">
                     <i class="fa-solid fa-feather-pointed"></i>
-                    <span>Feed</span>
+                    <span>Live Feed</span>
                 </a>
             </li>
         </ul>
@@ -443,53 +432,26 @@
 
     <!-- 2. Main Workspace -->
     <div class="saas-main-wrapper">
-        <!-- Topbar: Restored Admin Desk Tabs -->
+        <!-- Topbar: Clean & Minimal (Tabs in Sidebar Only) -->
         <header class="saas-topbar">
-            <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                <button class="mobile-toggle-btn me-1" type="button" onclick="toggleSidebar()">
+            <div class="d-flex align-items-center gap-3">
+                <button class="mobile-toggle-btn" type="button" onclick="toggleSidebar()">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: #eaf0dd; color: #3f4e1c; border: 1px solid #c9d8ad;">
-                    <i class="fa-solid fa-circle-check me-1" style="color: #556b2f;"></i> Active
-                </span>
-                <span class="text-secondary small d-none d-xxl-inline">Model: <strong>{{ current_model_name|default('TF-IDF + LR') }}</strong></span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: #eaf0dd; color: #3f4e1c; border: 1px solid #c9d8ad;">
+                        <i class="fa-solid fa-circle-check me-1" style="color: #556b2f;"></i> MongoDB Active
+                    </span>
+                    <span class="text-muted small d-none d-md-inline">&bull;</span>
+                    <span class="text-secondary small d-none d-md-inline">Model: <strong>{{ current_model_name|default('TF-IDF + Logistic Regression') }}</strong></span>
+                </div>
             </div>
 
-            <!-- Restored Admin Desk Tabs in Topbar -->
-            <nav class="topbar-nav-tabs">
-                <a href="{{ url_for('admin_dashboard') }}" class="topbar-nav-tab {% if active_tab == 'dashboard' or not active_tab %}active{% endif %}" title="Dashboard Overview">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Overview</span>
-                </a>
-                <a href="{{ url_for('admin_queue') }}" class="topbar-nav-tab {% if active_tab == 'queue' %}active{% endif %}" title="Moderation Queue">
-                    <i class="fa-solid fa-shield-virus"></i>
-                    <span>Moderation Queue</span>
-                    {% if pending_quarantined_count and pending_quarantined_count > 0 %}
-                    <span class="badge rounded-pill ms-1" style="background-color: var(--danger-color); color: #ffffff; font-size: 0.68rem; padding: 2px 6px;">{{ pending_quarantined_count }}</span>
-                    {% endif %}
-                </a>
-                <a href="{{ url_for('admin_users') }}" class="topbar-nav-tab {% if active_tab == 'users' %}active{% endif %}" title="User Management">
-                    <i class="fa-solid fa-users"></i>
-                    <span>User Management</span>
-                </a>
-                <a href="{{ url_for('admin_analytics') }}" class="topbar-nav-tab {% if active_tab == 'analytics' %}active{% endif %}" title="AI Analytics">
-                    <i class="fa-solid fa-brain"></i>
-                    <span>AI Analytics</span>
-                </a>
-                <a href="{{ url_for('admin_activity') }}" class="topbar-nav-tab {% if active_tab == 'activity' %}active{% endif %}" title="Activity Logs">
-                    <i class="fa-solid fa-list-check"></i>
-                    <span>Activity Logs</span>
-                </a>
-                <a href="{{ url_for('admin_settings') }}" class="topbar-nav-tab {% if active_tab == 'settings' %}active{% endif %}" title="Settings">
-                    <i class="fa-solid fa-sliders"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-
-            <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                <a href="{{ url_for('admin_feed') }}" class="btn btn-sm rounded-pill px-3 shadow-sm text-decoration-none" style="{% if active_tab == 'feed' %}background-color: var(--coffee-darkest); color: #ffffff; border: 1px solid var(--beige-border);{% else %}background-color: var(--olive-medium); color: #ffffff; border: none;{% endif %} font-weight: 600;">
-                    <i class="fa-solid fa-feather-pointed me-1"></i> Feed
-                </a>
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 text-muted small d-none d-sm-flex">
+                    <i class="fa-solid fa-shield-halved" style="color: var(--olive-medium);"></i>
+                    <span style="color: var(--coffee-dark);">CyberShield Console</span>
+                </div>
             </div>
         </header>
 
