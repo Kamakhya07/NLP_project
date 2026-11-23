@@ -165,8 +165,14 @@ def admin_required(f):
 def inject_user_context():
     """Provides current_user and unread_notifs_count to all Jinja templates."""
     user_id = session.get("user_id")
-    user = MongoDBManager.get_user_by_id(user_id) if user_id else None
-    unread_count = MongoDBManager.get_unread_count(user_id) if user_id else 0
+    user = None
+    unread_count = 0
+    if user_id:
+        try:
+            user = MongoDBManager.get_user_by_id(user_id)
+            unread_count = MongoDBManager.get_unread_count(user_id) if user else 0
+        except Exception as e:
+            logger.warning(f"Error fetching user context: {e}")
     return {
         "current_user": user,
         "unread_notifs_count": unread_count
@@ -200,7 +206,15 @@ def require_login_globally():
         return None
 
     user_id = session.get("user_id")
-    if not user_id or not MongoDBManager.get_user_by_id(user_id):
+    if not user_id:
+        return redirect(url_for("login"))
+
+    try:
+        if not MongoDBManager.get_user_by_id(user_id):
+            session.clear()
+            return redirect(url_for("login"))
+    except Exception as err:
+        logger.error(f"Error validating session in before_request: {err}")
         return redirect(url_for("login"))
 
 
@@ -208,13 +222,26 @@ def require_login_globally():
 def login():
     """User and Administrator authentication."""
     # If already logged in, redirect directly to appropriate dashboard/feed
-    if "user_id" in session and MongoDBManager.get_user_by_id(session["user_id"]):
-        user = MongoDBManager.get_user_by_id(session["user_id"])
-        if user.get("role") == "admin":
-            return redirect(url_for("admin_dashboard"))
-        return redirect(url_for("feed"))
+    try:
+        if "user_id" in session:
+            user = MongoDBManager.get_user_by_id(session["user_id"])
+            if user:
+                if user.get("role") == "admin":
+                    return redirect(url_for("admin_dashboard"))
+                return redirect(url_for("feed"))
+    except Exception as e:
+        logger.warning(f"Notice while checking existing session: {e}")
 
-    demo_users = MongoDBManager.get_demo_users()
+    demo_users = []
+    try:
+        demo_users = MongoDBManager.get_demo_users()
+    except Exception as db_err:
+        logger.error(f"MongoDB connection error on login page: {db_err}")
+        flash(
+            "Database Connection Notice: Could not connect to MongoDB. "
+            "Please check that MONGO_URI is configured correctly in Render.",
+            "danger"
+        )
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()

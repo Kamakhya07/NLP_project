@@ -20,7 +20,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 logger = logging.getLogger(__name__)
 
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
+def get_mongo_uri() -> str:
+    """Retrieves MongoDB URI with fallback support across common environment variable naming."""
+    for key in ("MONGO_URI", "MONGODB_URI", "DATABASE_URL", "mongo_uri", "mongodb_uri"):
+        val = os.environ.get(key)
+        if val and val.strip():
+            return val.strip()
+    return "mongodb://localhost:27017/"
+
+MONGO_URI = get_mongo_uri()
 DB_NAME = os.environ.get("MONGO_DB_NAME", "cybershield_db")
 
 
@@ -33,7 +41,10 @@ class MongoDBManager:
     @classmethod
     def get_client(cls) -> MongoClient:
         if cls._client is None:
-            cls._client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000)
+            uri = get_mongo_uri()
+            masked_uri = re.sub(r":([^@/]+)@", ":****@", uri)
+            logger.info(f"Connecting to MongoDB at: {masked_uri}")
+            cls._client = MongoClient(uri, serverSelectionTimeoutMS=5000)
         return cls._client
 
     @classmethod
