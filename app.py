@@ -317,6 +317,8 @@ def logout():
 @app.route("/feed")
 def feed():
     """Twitter-like social timeline with published, safe posts."""
+    if session.get("role") == "admin":
+        return redirect(url_for("admin_feed"))
     posts = MongoDBManager.get_feed_posts(limit=50)
     return render_template("feed.html", posts=posts)
 
@@ -332,11 +334,17 @@ def create_post():
     user = MongoDBManager.get_user_by_id(session["user_id"])
     if not user or user.get("status") == "blocked":
         flash("Your account is blocked. You cannot post content.", "danger")
+        ref = request.referrer
+        if ref and "/admin" in ref:
+            return redirect(url_for("admin_feed"))
         return redirect(url_for("feed"))
 
     content = request.form.get("content", "").strip()
     if not content:
         flash("Post content cannot be empty.", "warning")
+        ref = request.referrer
+        if ref and "/admin" in ref:
+            return redirect(url_for("admin_feed"))
         return redirect(url_for("feed"))
 
     image_file = request.files.get("image")
@@ -430,6 +438,11 @@ def create_post():
     else:
         flash("Tweet published to timeline successfully!", "success")
 
+    ref = request.referrer
+    if ref and "/admin" in ref:
+        return redirect(url_for("admin_feed"))
+    if session.get("role") == "admin":
+        return redirect(url_for("admin_feed"))
     return redirect(url_for("feed"))
 
 
@@ -443,6 +456,11 @@ def like_post(post_id):
         )
     except Exception as e:
         logger.error(f"Error liking post {post_id}: {e}")
+    ref = request.referrer
+    if ref and "/admin" in ref:
+        return redirect(url_for("admin_feed"))
+    if session.get("role") == "admin":
+        return redirect(url_for("admin_feed"))
     return redirect(url_for("feed"))
 
 
@@ -491,6 +509,44 @@ def admin_dashboard():
         history_posts=history_posts,
         current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type)
     )
+
+
+@app.route("/admin/feed")
+@admin_required
+def admin_feed():
+    """Live social timeline integrated directly inside Admin Console."""
+    posts = MongoDBManager.get_feed_posts(limit=50)
+    quarantined = MongoDBManager.get_quarantined_posts()
+    return render_template(
+        "admin/feed.html",
+        active_tab="feed",
+        posts=posts,
+        pending_quarantined_count=len(quarantined),
+        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type)
+    )
+
+
+@app.route("/admin/post/<post_id>/delete", methods=["POST"])
+@admin_required
+def admin_delete_post(post_id):
+    """Admin permanently deletes a post from the timeline."""
+    try:
+        MongoDBManager.posts_col().delete_one({"_id": ObjectId(post_id)})
+        MongoDBManager.log_activity(
+            admin_username=session.get("username", "admin"),
+            action="delete_post",
+            target_id=post_id,
+            details=f"Permanently removed post {post_id} from timeline"
+        )
+        flash("Post permanently removed from timeline.", "info")
+    except Exception as e:
+        logger.error(f"Error deleting post {post_id}: {e}")
+        flash("Failed to delete post.", "danger")
+
+    ref = request.referrer
+    if ref and "/admin" in ref:
+        return redirect(ref)
+    return redirect(url_for("admin_feed"))
 
 
 @app.route("/admin/queue")

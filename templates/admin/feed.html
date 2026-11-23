@@ -1,0 +1,282 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Live Feed | CyberShield Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-feed-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.admin-feed-card {
+    background: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.15s ease;
+}
+.admin-feed-card:hover {
+    border-color: var(--coffee-muted);
+}
+.admin-feed-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+    background-color: var(--coffee-warm);
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+.admin-compose-box {
+    background: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+.admin-compose-textarea {
+    background: #ffffff;
+    border: 1px solid var(--beige-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--coffee-darkest);
+    font-size: 1rem;
+    resize: none;
+    width: 100%;
+}
+.admin-compose-textarea:focus {
+    outline: none;
+    border-color: var(--coffee-warm);
+    box-shadow: 0 0 0 3px rgba(77, 54, 37, 0.1);
+}
+.preview-img-container {
+    position: relative;
+    max-height: 240px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 12px;
+    border: 1px solid var(--card-border);
+}
+.preview-img {
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-feed-container">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1" style="color: var(--coffee-darkest);">Platform Social Feed</h3>
+            <p class="text-secondary small mb-0">Live public timeline of verified safe posts. Review, inspect, and moderate content directly within the Admin Console.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm d-flex align-items-center gap-2 rounded-pill px-3" style="background-color: var(--coffee-warm); color: #ffffff; font-weight: 600; text-decoration: none;">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Admin Desk</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Feed Column -->
+        <div class="col-lg-8 col-12">
+            <!-- Admin Compose Post Box -->
+            <div class="admin-compose-box">
+                <form action="{{ url_for('create_post') }}" method="POST" enctype="multipart/form-data" id="composeForm">
+                    <div class="d-flex gap-3">
+                        <div class="admin-feed-avatar">
+                            {{ current_user.display_name[0]|upper if current_user else 'A' }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <textarea name="content" id="postContent" class="admin-compose-textarea" rows="3" placeholder="Post an announcement or comment to the community feed..." maxlength="500" required></textarea>
+                            
+                            <!-- Screenshot image preview -->
+                            <div id="imagePreviewContainer" class="preview-img-container d-none">
+                                <img id="imagePreview" class="preview-img" alt="Attached screenshot">
+                                <button type="button" class="btn btn-sm btn-dark position-absolute top-0 end-0 m-2 rounded-circle" onclick="removeImage()">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2" style="border-color: var(--card-border) !important;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="postImage" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2 mb-0" style="cursor: pointer; border-color: var(--beige-border); color: var(--coffee-warm);" title="Attach screenshot or photo">
+                                        <i class="fa-solid fa-image" style="color: var(--olive-medium);"></i>
+                                        <span class="d-none d-sm-inline small">Attach Screenshot</span>
+                                    </label>
+                                    <input type="file" name="image" id="postImage" class="d-none" accept="image/*" onchange="previewSelectedImage(this)">
+                                    <span id="charCount" class="text-secondary small ms-1">500</span>
+                                </div>
+
+                                <button type="submit" class="btn btn-saas-primary px-4 rounded-pill fw-semibold shadow-sm d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span>Publish Post</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Posts Stream -->
+            <div class="posts-stream">
+                {% if posts %}
+                    {% for post in posts %}
+                    <div class="admin-feed-card">
+                        <div class="d-flex gap-3">
+                            <div class="admin-feed-avatar">
+                                {{ post.display_name[0]|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                    <span class="fw-bold" style="color: var(--coffee-darkest);">{{ post.display_name }}</span>
+                                    <span class="small" style="color: var(--beige-muted);">@{{ post.username }}</span>
+                                    <span class="small text-secondary">&bull;</span>
+                                    <span class="small text-secondary">{{ post.created_at.strftime('%b %d, %H:%M') if post.created_at else 'Just now' }}</span>
+                                    <span class="badge rounded-pill fs-xs ms-auto" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+                                        <i class="fa-solid fa-circle-check me-1" style="color: var(--olive-medium);"></i> Safe
+                                    </span>
+                                </div>
+
+                                <div class="mb-2 fs-6" style="white-space: pre-wrap; word-break: break-word; color: var(--coffee-darkest);">{{ post.content }}</div>
+
+                                {% if post.image_path %}
+                                <div class="rounded-3 overflow-hidden border my-2" style="max-height: 320px; border-color: var(--card-border) !important;">
+                                    <img src="{{ url_for('static', filename=post.image_path) }}" class="w-100" style="object-fit: cover; max-height: 320px;" alt="Post screenshot">
+                                </div>
+                                {% if post.moderation and post.moderation.ocr_text %}
+                                <div class="p-2 rounded-2 border fs-xs mt-1" style="background-color: #faf7f2; border-color: var(--card-border) !important; color: var(--coffee-warm);">
+                                    <i class="fa-solid fa-file-lines me-1" style="color: var(--olive-medium);"></i>
+                                    <strong>OCR Text:</strong> {{ post.moderation.ocr_text }}
+                                </div>
+                                {% endif %}
+                                {% endif %}
+
+                                <div class="d-flex align-items-center justify-content-between small pt-2 mt-2 border-top" style="border-color: var(--card-border) !important;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <form action="{{ url_for('like_post', post_id=post._id) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-link text-decoration-none p-0 d-flex align-items-center gap-1" style="color: var(--coffee-muted);">
+                                                <i class="fa-regular fa-heart"></i>
+                                                <span>{{ post.likes_count or 0 }}</span>
+                                            </button>
+                                        </form>
+                                        <span class="text-secondary fs-xs">
+                                            <i class="fa-solid fa-microchip me-1" style="color: var(--olive-medium);"></i>
+                                            Confidence: {{ ((post.moderation.confidence or 0.95) * 100)|round(1) }}%
+                                        </span>
+                                    </div>
+
+                                    <!-- Admin Moderation Actions -->
+                                    <div class="d-flex align-items-center gap-2">
+                                        <form action="{{ url_for('admin_delete_post', post_id=post._id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this post from the timeline?');">
+                                            <button type="submit" class="btn btn-sm py-1 px-2 rounded-pill text-danger border-0" style="background-color: #faeaea; font-size: 0.72rem;" title="Delete post">
+                                                <i class="fa-solid fa-trash me-1"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="admin-feed-card p-5 text-center">
+                        <i class="fa-solid fa-comments fs-1 mb-2" style="color: var(--beige-muted);"></i>
+                        <h5 class="fw-bold" style="color: var(--coffee-darkest);">No posts yet</h5>
+                        <p class="small text-muted mb-0">No posts have been published to the timeline yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Side Widgets (Admin Perspective) -->
+        <div class="col-lg-4 col-12">
+            <!-- Active Model Card -->
+            <div class="saas-card p-3 mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom" style="border-color: var(--card-border) !important;">
+                    <i class="fa-solid fa-brain" style="color: var(--olive-medium);"></i>
+                    <span class="fw-bold small" style="color: var(--coffee-darkest);">Active Defense Model</span>
+                </div>
+                <div class="fw-semibold small" style="color: var(--coffee-dark);">{{ current_model_name }}</div>
+                <div class="fs-xs text-muted mt-1">Every submitted post is analyzed before publication. Toxic comments are quarantined to the Admin Desk.</div>
+            </div>
+
+            <!-- Intercepted Queue Indicator -->
+            <div class="saas-card p-3 mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom" style="border-color: var(--card-border) !important;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-shield-virus text-warning"></i>
+                        <span class="fw-bold small" style="color: var(--coffee-darkest);">Intercepted Queue</span>
+                    </div>
+                    {% if pending_quarantined_count and pending_quarantined_count > 0 %}
+                    <span class="badge rounded-pill" style="background-color: var(--danger-color); color: #ffffff;">{{ pending_quarantined_count }}</span>
+                    {% else %}
+                    <span class="badge rounded-pill" style="background-color: var(--olive-tint); color: var(--olive-dark);">Clear</span>
+                    {% endif %}
+                </div>
+                <p class="fs-xs text-secondary mb-2">Flagged cyberbullying submissions requiring manual review.</p>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm w-100 rounded-pill" style="background-color: #f0e9dd; color: var(--coffee-dark); border: 1px solid var(--beige-border); font-weight: 600;">
+                    Review on Admin Desk &rarr;
+                </a>
+            </div>
+
+            <!-- Fast Navigation Tips -->
+            <div class="saas-card p-3">
+                <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom" style="border-color: var(--card-border) !important;">
+                    <i class="fa-solid fa-circle-info" style="color: var(--coffee-warm);"></i>
+                    <span class="fw-bold small" style="color: var(--coffee-darkest);">Admin Controls</span>
+                </div>
+                <ul class="list-unstyled fs-xs text-secondary mb-0 d-flex flex-column gap-2">
+                    <li><i class="fa-solid fa-check text-success me-1"></i> Zero external redirection: Feed runs completely in Admin mode.</li>
+                    <li><i class="fa-solid fa-trash text-danger me-1"></i> Administrators can delete posts directly with audit logging.</li>
+                    <li><i class="fa-solid fa-image text-warning me-1"></i> OCR scans all attached screenshots automatically.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewSelectedImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('imagePreview').src = e.target.result;
+            document.getElementById('imagePreviewContainer').classList.remove('d-none');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeImage() {
+    const input = document.getElementById('postImage');
+    if (input) input.value = '';
+    const container = document.getElementById('imagePreviewContainer');
+    if (container) container.classList.add('d-none');
+    const preview = document.getElementById('imagePreview');
+    if (preview) preview.src = '';
+}
+
+const postContent = document.getElementById('postContent');
+const charCount = document.getElementById('charCount');
+if (postContent && charCount) {
+    postContent.addEventListener('input', function() {
+        const remaining = 500 - this.value.length;
+        charCount.textContent = remaining;
+    });
+}
+</script>
+{% endblock %}
