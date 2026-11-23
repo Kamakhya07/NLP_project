@@ -362,58 +362,24 @@
             </div>
         </a>
 
-        <!-- Navigation Links (History tab removed as requested; history is now integrated in Dashboard) -->
+        <!-- Navigation Links: Strictly Admin Desk and Feed -->
         <ul class="sidebar-nav">
             <li class="sidebar-nav-item">
-                <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link {% if active_tab == 'dashboard' %}active{% endif %}">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Dashboard</span>
+                <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link {% if active_tab == 'dashboard' or not active_tab %}active{% endif %}">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Admin Desk</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="{{ url_for('admin_queue') }}" class="sidebar-link {% if active_tab == 'queue' %}active{% endif %} justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-shield-virus"></i>
-                        <span>Moderation Queue</span>
-                    </div>
-                    {% if pending_quarantined_count and pending_quarantined_count > 0 %}
-                    <span class="badge rounded-pill px-2" style="background-color: var(--danger-color); color: #ffffff; font-size: 0.72rem;">{{ pending_quarantined_count }}</span>
-                    {% endif %}
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="{{ url_for('admin_users') }}" class="sidebar-link {% if active_tab == 'users' %}active{% endif %}">
-                    <i class="fa-solid fa-users"></i>
-                    <span>User Management</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="{{ url_for('admin_analytics') }}" class="sidebar-link {% if active_tab == 'analytics' %}active{% endif %}">
-                    <i class="fa-solid fa-brain"></i>
-                    <span>AI Analytics</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="{{ url_for('admin_activity') }}" class="sidebar-link {% if active_tab == 'activity' %}active{% endif %}">
-                    <i class="fa-solid fa-list-check"></i>
-                    <span>Activity Logs</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="{{ url_for('admin_settings') }}" class="sidebar-link {% if active_tab == 'settings' %}active{% endif %}">
-                    <i class="fa-solid fa-sliders"></i>
-                    <span>Settings</span>
+                <a href="{{ url_for('feed') }}" class="sidebar-link {% if active_tab == 'feed' %}active{% endif %}">
+                    <i class="fa-solid fa-feather-pointed"></i>
+                    <span>Feed</span>
                 </a>
             </li>
         </ul>
 
         <!-- Sidebar Footer / Admin Session -->
         <div class="sidebar-footer">
-            <a href="{{ url_for('feed') }}" class="btn btn-sm w-100 mb-3 text-start d-flex align-items-center gap-2 text-light" style="background-color: var(--sidebar-hover); border: 1px solid var(--sidebar-border);">
-                <i class="fa-solid fa-arrow-left text-warning"></i>
-                <span class="small">Back to Social Feed</span>
-            </a>
-            
             <div class="admin-profile-badge">
                 <div class="admin-avatar">
                     {{ current_user.display_name[0]|upper if current_user else 'A' }}
