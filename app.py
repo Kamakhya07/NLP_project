@@ -384,112 +384,127 @@ def create_post():
     Scans with CyberShield AI + OCR (if screenshot attached) + LIME explainability.
     If hate speech is detected, quarantines post, alerts user, and routes to Admin Desk.
     """
-    user = MongoDBManager.get_user_by_id(session["user_id"])
-    if not user or user.get("status") == "blocked":
-        flash("Your account is blocked. You cannot post content.", "danger")
-        ref = request.referrer
-        if ref and "/admin" in ref:
-            return redirect(url_for("admin_feed"))
-        return redirect(url_for("feed"))
-
-    content = request.form.get("content", "").strip()
-    if not content:
-        flash("Post content cannot be empty.", "warning")
-        ref = request.referrer
-        if ref and "/admin" in ref:
-            return redirect(url_for("admin_feed"))
-        return redirect(url_for("feed"))
-
-    image_file = request.files.get("image")
-    saved_image_rel_path = None
-    ocr_extracted_text = None
-
-    if image_file and image_file.filename:
-        from werkzeug.utils import secure_filename
-        sec_name = secure_filename(image_file.filename)
-        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        fname = f"post_{timestamp_str}_{sec_name}"
-        save_path = os.path.join(UPLOAD_FOLDER, fname)
-        image_file.save(save_path)
-        saved_image_rel_path = f"uploads/{fname}"
-
-        # Extract OCR text from screenshot
-        try:
-            ocr_res = ocr_detector.extract_text_and_boxes(save_path)
-            if ocr_res.get("text"):
-                ocr_extracted_text = ocr_res["text"].strip()
-        except Exception as ocr_err:
-            logger.warning(f"OCR extraction error on post image: {ocr_err}")
-
-    # Build text for AI inference (text + OCR text if available)
-    combined_text_for_ai = content
-    if ocr_extracted_text:
-        combined_text_for_ai = f"{content} [Image Text]: {ocr_extracted_text}"
-
-    # Run AI inference
-    pred_res = predictor.predict(combined_text_for_ai)
-    pred_label = pred_res.get("prediction", "Non-Bullying")
-    confidence = pred_res.get("confidence", 0.5)
-    # Check if confidence is percentage (e.g. 96.5) or decimal (0.965)
-    conf_norm = confidence / 100.0 if confidence > 1.0 else confidence
-
-    is_hate = (pred_label in ("Bullying", "Cyberbullying") or pred_res.get("label") == 1)
-
-    # Run Token-Level XAI to highlight toxic words
-    toxic_tokens = []
     try:
-        xai_data = token_explainer.explain(combined_text_for_ai, predictor=predictor)
-        for tok in xai_data.get("tokens", []):
-            tok_word = tok.get("word") or tok.get("token")
-            tok_weight = tok.get("weight", 0.0)
-            if tok.get("direction") == "bullying" or tok_weight > 0.05:
-                toxic_tokens.append({
-                    "token": tok_word,
-                    "score": round(float(tok_weight), 4),
-                    "is_toxic": True
-                })
-    except Exception as xai_err:
-        logger.warning(f"XAI attribution error: {xai_err}")
+        user = MongoDBManager.get_user_by_id(session["user_id"])
+        if not user or user.get("status") == "blocked":
+            flash("Your account is blocked. You cannot post content.", "danger")
+            ref = request.referrer
+            if ref and "/admin" in ref:
+                return redirect(url_for("admin_feed"))
+            return redirect(url_for("feed"))
 
-    risk_score = "High" if (is_hate and conf_norm > 0.8) else ("Medium" if is_hate else "Safe")
+        content = request.form.get("content", "").strip()
+        if not content:
+            flash("Post content cannot be empty.", "warning")
+            ref = request.referrer
+            if ref and "/admin" in ref:
+                return redirect(url_for("admin_feed"))
+            return redirect(url_for("feed"))
 
-    moderation_info = {
-        "prediction": "Cyberbullying" if is_hate else "Non-Cyberbullying",
-        "confidence": round(float(conf_norm), 4),
-        "risk_score": risk_score,
-        "model_used": SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type),
-        "toxic_tokens": toxic_tokens,
-        "ocr_text": ocr_extracted_text,
-        "intercepted": is_hate
-    }
+        image_file = request.files.get("image")
+        saved_image_rel_path = None
+        ocr_extracted_text = None
 
-    MongoDBManager.create_post(
-        user_id=str(user["_id"]),
-        username=user["username"],
-        display_name=user.get("display_name", user["username"]),
-        content=content,
-        image_path=saved_image_rel_path,
-        moderation_info=moderation_info
-    )
+        if image_file and image_file.filename:
+            try:
+                from werkzeug.utils import secure_filename
+                sec_name = secure_filename(image_file.filename)
+                timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                fname = f"post_{timestamp_str}_{sec_name}"
+                save_path = os.path.join(UPLOAD_FOLDER, fname)
+                image_file.save(save_path)
+                saved_image_rel_path = f"uploads/{fname}"
 
-    # Record to MongoDB predictions collection for analytics
-    MongoDBManager.save_prediction(
-        text_snippet=content,
-        prediction=pred_label,
-        confidence=confidence,
-        model_type=predictor.model_type,
-        user_id=str(user["_id"])
-    )
+                # Extract OCR text from screenshot
+                ocr_res = ocr_detector.extract_text_and_boxes(save_path)
+                if ocr_res.get("text"):
+                    ocr_extracted_text = ocr_res["text"].strip()
+            except Exception as ocr_err:
+                logger.warning(f"OCR extraction error on post image: {ocr_err}")
 
-    if is_hate:
-        conf_pct = round(conf_norm * 100, 1)
-        flash(
-            f"⚠️ Hate Speech / Cyberbullying Intercepted ({conf_pct}% confidence)! "
-            f"Your tweet was withheld from the public timeline and submitted to Admin Moderation.",
-            "danger"
+        # Build text for AI inference (text + OCR text if available)
+        combined_text_for_ai = content
+        if ocr_extracted_text:
+            combined_text_for_ai = f"{content} [Image Text]: {ocr_extracted_text}"
+
+        # Run AI inference with resilient fallback
+        try:
+            pred_res = predictor.predict(combined_text_for_ai)
+        except Exception as pred_err:
+            logger.error(f"Inference error in create_post: {pred_err}", exc_info=True)
+            fallback_predictor = CyberbullyingPredictor(model_type="logistic_regression")
+            pred_res = fallback_predictor.predict(combined_text_for_ai)
+
+        pred_label = pred_res.get("prediction", "Non-Bullying")
+        confidence = pred_res.get("confidence", 0.5)
+        # Check if confidence is percentage (e.g. 96.5) or decimal (0.965)
+        conf_norm = confidence / 100.0 if confidence > 1.0 else confidence
+
+        is_hate = (pred_label in ("Bullying", "Cyberbullying") or pred_res.get("label") == 1)
+
+        # Run Token-Level XAI to highlight toxic words
+        toxic_tokens = []
+        try:
+            xai_data = token_explainer.explain(combined_text_for_ai, predictor=predictor)
+            for tok in xai_data.get("tokens", []):
+                tok_word = tok.get("word") or tok.get("token")
+                tok_weight = tok.get("weight", 0.0)
+                if tok.get("direction") == "bullying" or tok_weight > 0.05:
+                    toxic_tokens.append({
+                        "token": tok_word,
+                        "score": round(float(tok_weight), 4),
+                        "is_toxic": True
+                    })
+        except Exception as xai_err:
+            logger.warning(f"XAI attribution error: {xai_err}")
+
+        risk_score = "High" if (is_hate and conf_norm > 0.8) else ("Medium" if is_hate else "Safe")
+
+        model_name = getattr(predictor, "model_type", "logistic_regression")
+        moderation_info = {
+            "prediction": "Cyberbullying" if is_hate else "Non-Cyberbullying",
+            "confidence": round(float(conf_norm), 4),
+            "risk_score": risk_score,
+            "model_used": SUPPORTED_MODELS.get(model_name, model_name),
+            "toxic_tokens": toxic_tokens,
+            "ocr_text": ocr_extracted_text,
+            "intercepted": is_hate
+        }
+
+        MongoDBManager.create_post(
+            user_id=str(user["_id"]),
+            username=user["username"],
+            display_name=user.get("display_name", user["username"]),
+            content=content,
+            image_path=saved_image_rel_path,
+            moderation_info=moderation_info
         )
-    else:
-        flash("Tweet published to timeline successfully!", "success")
+
+        # Record to MongoDB predictions collection for analytics
+        try:
+            MongoDBManager.save_prediction(
+                text_snippet=content,
+                prediction=pred_label,
+                confidence=confidence,
+                model_type=model_name,
+                user_id=str(user["_id"])
+            )
+        except Exception as save_err:
+            logger.warning(f"Failed to record prediction analytics: {save_err}")
+
+        if is_hate:
+            conf_pct = round(conf_norm * 100, 1)
+            flash(
+                f"⚠️ Hate Speech / Cyberbullying Intercepted ({conf_pct}% confidence)! "
+                f"Your tweet was withheld from the public timeline and submitted to Admin Moderation.",
+                "danger"
+            )
+        else:
+            flash("Tweet published to timeline successfully!", "success")
+
+    except Exception as err:
+        logger.error(f"Error in create_post: {err}", exc_info=True)
+        flash(f"Could not submit tweet: {err}", "danger")
 
     ref = request.referrer
     if ref and "/admin" in ref:
@@ -1358,7 +1373,9 @@ def page_not_found(e):
 def internal_server_error(e):
     """Custom 500 Internal Server Error page."""
     logger.error(f"500 Internal Server Error: {e}", exc_info=True)
-    return render_template("500.html", error_message=str(e)), 500
+    orig = getattr(e, "original_exception", None)
+    diag = f"{type(orig).__name__}: {orig}" if orig else str(e)
+    return render_template("500.html", error_message=diag), 500
 
 
 @app.errorhandler(400)
