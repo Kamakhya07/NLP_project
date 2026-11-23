@@ -21,11 +21,34 @@ from werkzeug.security import generate_password_hash, check_password_hash
 logger = logging.getLogger(__name__)
 
 def get_mongo_uri() -> str:
-    """Retrieves MongoDB URI with fallback support across common environment variable naming."""
-    for key in ("MONGO_URI", "MONGODB_URI", "DATABASE_URL", "mongo_uri", "mongodb_uri"):
+    """Retrieves MongoDB URI with fallback support across common environment variable naming and files."""
+    # 1. Direct standard keys
+    for key in ("MONGO_URI", "MONGODB_URI", "DATABASE_URL", "mongo_uri", "mongodb_uri", "MONGO_URL", "DATABASE_URI"):
         val = os.environ.get(key)
         if val and val.strip():
             return val.strip()
+
+    # 2. Check ANY environment variable containing 'mongodb://' or 'mongodb+srv://'
+    for k, v in os.environ.items():
+        if isinstance(v, str) and ("mongodb+srv://" in v or "mongodb://" in v):
+            logger.info(f"Auto-detected MongoDB URI in environment variable '{k}'")
+            return v.strip()
+
+    # 3. Check for .env file or Render secret file (/etc/secrets/.env)
+    for env_path in [".env", "/etc/secrets/.env", "/etc/secrets/secrets.env"]:
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            pk, pv = line.split("=", 1)
+                            if ("MONGO" in pk.upper() or "DB" in pk.upper()) and "mongodb" in pv:
+                                logger.info(f"Loaded MongoDB URI from file: {env_path}")
+                                return pv.strip().strip("'\"")
+            except Exception as e:
+                logger.warning(f"Error reading {env_path}: {e}")
+
     return "mongodb://localhost:27017/"
 
 MONGO_URI = get_mongo_uri()

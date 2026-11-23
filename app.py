@@ -21,6 +21,14 @@ from functools import wraps
 from typing import Optional, Dict, Any, List
 from bson import ObjectId
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    load_dotenv("/etc/secrets/.env")
+    load_dotenv("/etc/secrets/secrets.env")
+except Exception:
+    pass
+
 from flask import (
     Flask,
     render_template,
