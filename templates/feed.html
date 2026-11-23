@@ -129,15 +129,15 @@
 
                                 <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2" style="border-color: var(--beige-subtle) !important;">
                                     <div class="d-flex align-items-center gap-2">
-                                        <label for="postImage" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2 mb-0" style="cursor: pointer;" title="Attach screenshot or photo">
-                                            <i class="fa-solid fa-image" style="color: var(--olive-medium);"></i>
-                                            <span class="d-none d-sm-inline small">Attach Screenshot</span>
+                                        <label for="postImage" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2 mb-0" style="cursor: pointer;" title="Attach media or photo">
+                                            <i class="fa-solid fa-photo-film" style="color: var(--olive-medium);"></i>
+                                            <span class="d-none d-sm-inline small">Attach Media</span>
                                         </label>
                                         <input type="file" name="image" id="postImage" class="d-none" accept="image/*" onchange="previewSelectedImage(this)">
                                         <span id="charCount" class="text-secondary small ms-1">500</span>
                                     </div>
 
-                                    <button type="submit" class="btn btn-saas-primary px-4 rounded-pill fw-semibold shadow-sm d-flex align-items-center gap-2">
+                                    <button type="submit" id="submitPostBtn" class="btn btn-post-submit px-4 rounded-pill fw-semibold shadow-sm d-flex align-items-center gap-2" disabled>
                                         <i class="fa-solid fa-paper-plane"></i>
                                         <span>Post</span>
                                     </button>
@@ -280,12 +280,31 @@
 </div>
 
 <script>
+const postContent = document.getElementById('postContent');
+const charCount = document.getElementById('charCount');
+const submitPostBtn = document.getElementById('submitPostBtn');
+const postImage = document.getElementById('postImage');
+
+function updatePostButtonState() {
+    if (!submitPostBtn) return;
+    const hasText = postContent && postContent.value.trim().length > 0;
+    const hasFile = postImage && postImage.files && postImage.files.length > 0;
+    if (hasText || hasFile) {
+        submitPostBtn.classList.add('active-ready');
+        submitPostBtn.removeAttribute('disabled');
+    } else {
+        submitPostBtn.classList.remove('active-ready');
+        submitPostBtn.setAttribute('disabled', 'disabled');
+    }
+}
+
 function previewSelectedImage(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             document.getElementById('imagePreview').src = e.target.result;
             document.getElementById('imagePreviewContainer').classList.remove('d-none');
+            updatePostButtonState();
         }
         reader.readAsDataURL(input.files[0]);
     }
@@ -295,15 +314,17 @@ function removeImage() {
     document.getElementById('postImage').value = '';
     document.getElementById('imagePreview').src = '';
     document.getElementById('imagePreviewContainer').classList.add('d-none');
+    updatePostButtonState();
 }
 
-const postContent = document.getElementById('postContent');
-const charCount = document.getElementById('charCount');
-if (postContent && charCount) {
+if (postContent) {
     postContent.addEventListener('input', () => {
         const remaining = 500 - postContent.value.length;
-        charCount.textContent = remaining;
+        if (charCount) charCount.textContent = remaining;
+        updatePostButtonState();
     });
+    // Check initial state
+    updatePostButtonState();
 }
 </script>
 {% endblock %}

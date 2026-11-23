@@ -20,8 +20,8 @@
             <span class="badge py-2 px-3 rounded-pill fw-semibold" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
                 <i class="fa-solid fa-user-shield me-1"></i> Private to @{{ current_user.username }}
             </span>
-            <a href="{{ url_for('index') }}" class="btn btn-primary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-magnifying-glass me-1"></i> New Scan
+            <a href="{{ url_for('feed') }}" class="btn btn-saas-primary btn-sm rounded-pill px-3 fw-semibold">
+                <i class="fa-solid fa-feather-pointed me-1"></i> Go to Feed
             </a>
         </div>
     </div>
@@ -50,8 +50,8 @@
             You haven't submitted any social media comments or screenshots for AI toxicity analysis under your account yet. Each user's evaluations remain strictly private to their own profile.
         </p>
         <div>
-            <a href="{{ url_for('index') }}" class="btn btn-saas-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
-                <i class="fa-solid fa-bolt me-2"></i> Run Your First Evaluation
+            <a href="{{ url_for('feed') }}" class="btn btn-saas-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                <i class="fa-solid fa-feather-pointed me-2"></i> Post on Community Feed
             </a>
         </div>
     </div>

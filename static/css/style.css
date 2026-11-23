@@ -522,6 +522,42 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Dynamic Post Submit Button (Inactive when empty, vibrant Olive when active)
+   -------------------------------------------------------------------------- */
+.btn-post-submit {
+    background-color: #dcd4c6 !important;
+    color: #8c8275 !important;
+    border: 1px solid #d4cabb !important;
+    font-weight: 600;
+    border-radius: 9999px;
+    padding: 8px 24px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-image: none !important;
+}
+
+.btn-post-submit.active-ready {
+    background-color: var(--olive-medium) !important;
+    color: #ffffff !important;
+    border-color: var(--olive-dark) !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    box-shadow: 0 4px 14px rgba(85, 107, 47, 0.35) !important;
+}
+
+.btn-post-submit.active-ready:hover {
+    background-color: var(--olive-dark) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(85, 107, 47, 0.45) !important;
+}
+
+.btn-post-submit.active-ready:active {
+    transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
    Footer
    -------------------------------------------------------------------------- */
 .cybershield-footer {

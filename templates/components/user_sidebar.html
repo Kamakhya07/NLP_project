@@ -5,10 +5,6 @@
             <i class="fa-solid fa-feather-pointed fs-5"></i>
             <span>Home Feed</span>
         </a>
-        <a href="{{ url_for('index') }}" class="sidebar-nav-link {% if request.endpoint == 'index' %}active{% endif %}">
-            <i class="fa-solid fa-magnifying-glass-chart fs-5"></i>
-            <span>AI Analyzer</span>
-        </a>
         <a href="{{ url_for('dashboard') }}" class="sidebar-nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
             <i class="fa-solid fa-chart-pie fs-5"></i>
             <span>Dashboard</span>

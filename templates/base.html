@@ -50,12 +50,6 @@
                 </a>
             </li>
             <li class="user-nav-item">
-                <a href="{{ url_for('index') }}" class="user-sidebar-link {% if request.endpoint == 'index' %}active{% endif %}">
-                    <i class="fa-solid fa-magnifying-glass-chart"></i>
-                    <span>AI Analyzer</span>
-                </a>
-            </li>
-            <li class="user-nav-item">
                 <a href="{{ url_for('dashboard') }}" class="user-sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Personal Dashboard</span>
