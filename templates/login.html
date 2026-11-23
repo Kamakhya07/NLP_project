@@ -4,41 +4,50 @@
 
 {% block extra_css %}
 <style>
-/* Page Layout */
-body {
+/* Lock body to full viewport with strictly no scrolling */
+html, body {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
     background-color: #f7f3ee !important;
 }
 
 .login-page-wrapper {
-    min-height: 85vh;
+    height: 100vh;
+    max-height: 100vh;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 24px 16px;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* Brand Header */
 .login-brand-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 24px;
+    gap: 9px;
+    margin-bottom: 16px;
 }
 .brand-shield-badge {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     background-color: #1e130b;
-    border-radius: 10px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #eab308;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     box-shadow: 0 2px 6px rgba(30, 19, 11, 0.2);
 }
 .brand-header-text {
-    font-size: 1.7rem;
+    font-size: 1.55rem;
     font-weight: 800;
     color: #1e130b;
     letter-spacing: -0.03em;
@@ -47,18 +56,38 @@ body {
 /* Login Card */
 .modern-login-card {
     background: #ffffff;
-    border-radius: 28px;
+    border-radius: 26px;
     box-shadow: 0 4px 30px rgba(59, 36, 22, 0.06);
     border: 1px solid #ede6dc;
-    max-width: 520px;
+    max-width: 480px;
     width: 100%;
-    padding: 40px 44px;
+    padding: 30px 36px;
+    box-sizing: border-box;
 }
 
 @media (max-width: 576px) {
     .modern-login-card {
-        padding: 28px 20px;
+        padding: 24px 20px;
         border-radius: 20px;
+    }
+}
+
+@media (max-height: 720px) {
+    .modern-login-card {
+        padding: 20px 28px;
+    }
+    .login-brand-header {
+        margin-bottom: 10px;
+    }
+    .role-pills-row {
+        margin-bottom: 14px !important;
+    }
+    .role-pill-btn {
+        padding: 9px 14px !important;
+    }
+    .btn-main-signin {
+        height: 44px !important;
+        margin-bottom: 14px !important;
     }
 }
 
@@ -67,7 +96,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
 .role-pill-btn {
@@ -76,10 +105,10 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px 18px;
+    padding: 10px 16px;
     border-radius: 9999px;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     text-decoration: none;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -107,17 +136,17 @@ body {
 
 /* Demo Users Row */
 .demo-users-label {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 500;
     color: #8c8275;
-    margin-bottom: 8px;
+    margin-bottom: 7px;
 }
 
 .demo-users-pills {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: wrap;
 }
 
@@ -125,12 +154,12 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 6px 14px;
+    padding: 5px 12px;
     border-radius: 9999px;
     border: 1.5px solid #ded6cc;
     background-color: #ffffff;
     color: #3b2416;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 500;
     text-decoration: none;
     transition: all 0.15s ease;
@@ -152,27 +181,27 @@ body {
 /* Form Inputs */
 .input-icon-box {
     position: relative;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 .input-icon-box .input-icon-left {
     position: absolute;
     top: 50%;
-    left: 16px;
+    left: 14px;
     transform: translateY(-50%);
     color: #1e130b;
-    font-size: 1rem;
+    font-size: 0.95rem;
     pointer-events: none;
 }
 
 .input-icon-box .clean-input {
     width: 100%;
-    height: 48px;
+    height: 45px;
     border-radius: 12px;
     border: 1.5px solid #ded6cc;
-    padding-left: 44px;
-    padding-right: 44px;
-    font-size: 0.95rem;
+    padding-left: 42px;
+    padding-right: 42px;
+    font-size: 0.92rem;
     color: #1e130b;
     background-color: #ffffff;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -194,22 +223,22 @@ body {
     color: #1e130b;
     padding: 4px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 /* Main Sign In Button */
 .btn-main-signin {
     width: 100%;
-    height: 48px;
+    height: 46px;
     background-color: #3b2416;
     color: #ffffff;
     border-radius: 12px;
     font-weight: 600;
-    font-size: 0.98rem;
+    font-size: 0.95rem;
     border: none;
     transition: background-color 0.15s ease, transform 0.1s ease;
-    margin-top: 4px;
-    margin-bottom: 22px;
+    margin-top: 2px;
+    margin-bottom: 18px;
 }
 
 .btn-main-signin:hover {
@@ -224,7 +253,7 @@ body {
 /* Footer Link */
 .login-bottom-link {
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: #6c6358;
 }
 
@@ -252,11 +281,23 @@ body {
 
     <!-- Main Sign In Card -->
     <div class="modern-login-card">
-        <h2 class="fw-bold text-center mb-1" style="color: #1e130b; font-size: 1.85rem; letter-spacing: -0.02em;">Sign In</h2>
-        <p class="text-center mb-4" style="color: #6c6358; font-size: 0.9rem;">Choose a demo login or use your own account</p>
+        <h2 class="fw-bold text-center mb-1" style="color: #1e130b; font-size: 1.75rem; letter-spacing: -0.02em;">Sign In</h2>
+        <p class="text-center mb-3" style="color: #6c6358; font-size: 0.88rem;">Choose a demo login or use your own account</p>
 
         <!-- Hidden labels for test assertions compatibility -->
         <span class="visually-hidden">Account Sign In - One-Click Demo Access</span>
+
+        <!-- Flash messages inside card -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} py-1 px-3 mb-2 small d-flex align-items-center gap-2 rounded-3" role="alert">
+                        <i class="fa-solid fa-circle-exclamation flex-shrink-0"></i>
+                        <div class="flex-grow-1 fs-xs">{{ message }}</div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
         <!-- Role Pills: User Demo (Selected) vs Admin Demo -->
         <div class="role-pills-row">
@@ -293,9 +334,9 @@ body {
         </div>
 
         <!-- Divider with "or" -->
-        <div class="d-flex align-items-center my-3">
+        <div class="d-flex align-items-center my-2 mb-3">
             <hr class="flex-grow-1 m-0" style="border-color: #ede6dc;">
-            <span class="px-3 small" style="color: #8c8275; font-size: 0.8rem;">or</span>
+            <span class="px-3 small" style="color: #8c8275; font-size: 0.78rem;">or</span>
             <hr class="flex-grow-1 m-0" style="border-color: #ede6dc;">
         </div>
 
