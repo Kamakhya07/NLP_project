@@ -108,10 +108,15 @@ def init_db() -> None:
             prediction TEXT NOT NULL,
             confidence REAL NOT NULL,
             model_type TEXT NOT NULL,
+            user_id TEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
     )
+    try:
+        cursor.execute("ALTER TABLE predictions ADD COLUMN user_id TEXT")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
     logger.info(f"Database initialized at {DB_PATH}")
@@ -816,15 +821,17 @@ def analyze():
         text_snippet = raw_text.strip()[:100]
         model_name_used = SUPPORTED_MODELS.get(active_predictor.model_type, active_predictor.model_type)
 
+        user_id_val = session.get("user_id")
+
         # Store prediction in SQLite
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO predictions (text_snippet, prediction, confidence, model_type, timestamp)
-            VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
+            INSERT INTO predictions (text_snippet, prediction, confidence, model_type, user_id, timestamp)
+            VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))
             """,
-            (text_snippet, prediction_label, confidence_pct, model_name_used)
+            (text_snippet, prediction_label, confidence_pct, model_name_used, user_id_val)
         )
         conn.commit()
         record_id = cursor.lastrowid
@@ -837,7 +844,7 @@ def analyze():
                 prediction=prediction_label,
                 confidence=confidence_pct,
                 model_type=model_name_used,
-                user_id=session.get("user_id")
+                user_id=user_id_val
             )
         except Exception as me:
             logger.warning(f"Notice: Failed to log prediction to MongoDB: {me}")
@@ -946,15 +953,17 @@ def analyze_screenshot():
         model_name_used = SUPPORTED_MODELS.get(active_predictor.model_type, active_predictor.model_type)
         text_snippet = f"[Screenshot OCR] {extracted_text.strip()[:80]}"
 
+        user_id_val = session.get("user_id")
+
         # 3. Store in SQLite
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO predictions (text_snippet, prediction, confidence, model_type, timestamp)
-            VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
+            INSERT INTO predictions (text_snippet, prediction, confidence, model_type, user_id, timestamp)
+            VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))
             """,
-            (text_snippet, prediction_label, confidence_pct, model_name_used)
+            (text_snippet, prediction_label, confidence_pct, model_name_used, user_id_val)
         )
         conn.commit()
         record_id = cursor.lastrowid
@@ -967,7 +976,7 @@ def analyze_screenshot():
                 prediction=prediction_label,
                 confidence=confidence_pct,
                 model_type=model_name_used,
-                user_id=session.get("user_id")
+                user_id=user_id_val
             )
         except Exception as me:
             logger.warning(f"Notice: Failed to log prediction to MongoDB: {me}")
@@ -1082,92 +1091,114 @@ def history():
 
 
 @app.route("/clear-history", methods=["POST"])
+@login_required
 def clear_history():
-    """Deletes all records from the predictions table."""
+    """Deletes prediction records strictly for the current user."""
+    user_id = session.get("user_id")
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM predictions")
-        cursor.execute("DELETE FROM sqlite_sequence WHERE name='predictions'")
+        cursor.execute("DELETE FROM predictions WHERE user_id = ?", (user_id,))
         conn.commit()
         conn.close()
 
-        # Clear MongoDB predictions history
+        # Clear user's MongoDB predictions history
         try:
-            MongoDBManager.clear_prediction_history()
+            MongoDBManager.clear_user_prediction_history(user_id)
         except Exception as me:
-            logger.warning(f"Notice: Failed to clear MongoDB prediction history: {me}")
+            logger.warning(f"Notice: Failed to clear MongoDB prediction history for user {user_id}: {me}")
 
-        flash("Prediction history has been permanently cleared.", "info")
+        flash("Your personal prediction history has been cleared.", "info")
     except Exception as err:
-        logger.error(f"Error clearing history: {err}", exc_info=True)
+        logger.error(f"Error clearing history for user {user_id}: {err}", exc_info=True)
         flash("Failed to clear history. An error occurred.", "danger")
 
-    return redirect(url_for("history"))
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/dashboard", methods=["GET"])
+@login_required
 def dashboard():
     """
-    Computes summary metrics, counts, and Chart.js datasets for the
-    analytics dashboard.
+    Computes summary metrics, counts, and Chart.js datasets strictly for the
+    currently authenticated user. Specific users can only see their own data.
     """
+    user_id = session.get("user_id")
+
     try:
+        # Retrieve user-isolated analytics from MongoDB
+        user_analytics = MongoDBManager.get_user_analytics(user_id)
+        if user_analytics and (user_analytics["total_count"] > 0 or MongoDBManager.users_col() is not None):
+            return render_template(
+                "dashboard.html",
+                total_count=user_analytics["total_count"],
+                bullying_count=user_analytics["bullying_count"],
+                non_bullying_count=user_analytics["non_bullying_count"],
+                bullying_pct=user_analytics["bullying_pct"],
+                non_bullying_pct=user_analytics["non_bullying_pct"],
+                avg_confidence=user_analytics["avg_confidence"],
+                recent_records=user_analytics["recent_records"],
+                timeline_labels=user_analytics["timeline_labels"],
+                timeline_confidences=user_analytics["timeline_confidences"],
+                timeline_colors=user_analytics["timeline_colors"],
+            )
+
+        # Fallback to SQLite filtered strictly by user_id
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Total predictions count
-        cursor.execute("SELECT COUNT(*) AS total FROM predictions")
+        cursor.execute("SELECT COUNT(*) AS total FROM predictions WHERE user_id = ?", (user_id,))
         total_row = cursor.fetchone()
         total_count = total_row["total"] if total_row else 0
 
-        # Bullying vs Non-Bullying counts
         cursor.execute(
             """
             SELECT prediction, COUNT(*) as cnt
             FROM predictions
+            WHERE user_id = ?
             GROUP BY prediction
-            """
+            """,
+            (user_id,)
         )
         counts = {row["prediction"]: row["cnt"] for row in cursor.fetchall()}
         bullying_count = counts.get("Bullying", 0)
         non_bullying_count = counts.get("Non-Bullying", 0)
 
-        # Average confidence calculation
-        cursor.execute("SELECT AVG(confidence) AS avg_conf FROM predictions")
+        cursor.execute("SELECT AVG(confidence) AS avg_conf FROM predictions WHERE user_id = ?", (user_id,))
         avg_row = cursor.fetchone()
         avg_confidence = round(float(avg_row["avg_conf"]), 1) if avg_row and avg_row["avg_conf"] is not None else 0.0
 
-        # Prediction history records (integrated directly into Dashboard)
         cursor.execute(
             """
             SELECT id, text_snippet, prediction, confidence, model_type, timestamp
             FROM predictions
+            WHERE user_id = ?
             ORDER BY id DESC
             LIMIT 100
-            """
+            """,
+            (user_id,)
         )
         recent_records = cursor.fetchall()
 
-        # Recent predictions for timeline / bar chart (last 10 IDs in chronological order)
         cursor.execute(
             """
             SELECT id, prediction, confidence, timestamp
             FROM predictions
+            WHERE user_id = ?
             ORDER BY id DESC
             LIMIT 10
-            """
+            """,
+            (user_id,)
         )
         timeline_rows = cursor.fetchall()[::-1]
 
         timeline_labels = [f"#{r['id']}" for r in timeline_rows]
         timeline_confidences = [float(r["confidence"]) for r in timeline_rows]
         timeline_colors = [
-            "rgba(239, 68, 68, 0.85)" if r["prediction"] == "Bullying" else "rgba(16, 185, 129, 0.85)"
+            "#b83a3a" if r["prediction"] == "Bullying" else "#556b2f"
             for r in timeline_rows
         ]
 
-        # Calculate percentages
         bullying_pct = round((bullying_count / total_count * 100), 1) if total_count > 0 else 0.0
         non_bullying_pct = round((non_bullying_count / total_count * 100), 1) if total_count > 0 else 0.0
 
@@ -1188,8 +1219,8 @@ def dashboard():
         )
 
     except Exception as err:
-        logger.error(f"Error computing dashboard analytics: {err}", exc_info=True)
-        flash("Could not compile dashboard analytics.", "danger")
+        logger.error(f"Error computing dashboard analytics for user {user_id}: {err}", exc_info=True)
+        flash("Could not compile personal dashboard analytics.", "danger")
         return render_template(
             "dashboard.html",
             total_count=0,

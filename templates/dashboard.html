@@ -5,34 +5,58 @@
 {% block content %}
 <div class="container">
 
-    <!-- Dashboard Header -->
+    <!-- Dashboard Header (Personal Account Analytics) -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h2 class="h3 fw-bold text-light mb-1">
-                <i class="fa-solid fa-chart-pie text-primary me-2"></i> Classification Analytics Dashboard
+            <h2 class="h3 fw-bold text-light mb-1 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-primary"></i> 
+                <span>My Personal Analytics Dashboard</span>
             </h2>
             <p class="text-secondary small mb-0">
-                Aggregated statistics, model performance metrics, and prediction distributions.
+                Evaluation history, model confidence metrics, and predictions submitted by <strong>@{{ current_user.username }}</strong> ({{ current_user.display_name }}).
             </p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-surface-dark border border-secondary-subtle text-secondary small py-2 px-3 rounded-pill">
-                <i class="fa-solid fa-arrows-rotate text-primary me-1"></i> Live Session Stats
+            <span class="badge py-2 px-3 rounded-pill fw-semibold" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+                <i class="fa-solid fa-user-shield me-1"></i> Private to @{{ current_user.username }}
             </span>
             <a href="{{ url_for('index') }}" class="btn btn-primary btn-sm rounded-pill px-3">
-                <i class="fa-solid fa-magnifying-glass me-1"></i> New Prediction
+                <i class="fa-solid fa-magnifying-glass me-1"></i> New Scan
             </a>
         </div>
     </div>
 
-    <!-- Usage Statistics Notice Banner -->
-    <div class="alert alert-info-subtle border border-info-subtle text-info-emphasis d-flex align-items-center gap-2 p-3 rounded-3 mb-4 shadow-sm" role="alert">
-        <i class="fa-solid fa-circle-info fs-5 flex-shrink-0"></i>
-        <div class="small">
-            <strong>Usage Scope Note:</strong> These are app usage statistics, not real-world prevalence data. Metrics represent submissions processed by this local application instance.
+    <!-- Data Privacy Banner -->
+    <div class="alert border d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 rounded-3 mb-4 shadow-sm" style="background-color: #fdfbf7; border-color: var(--beige-border) !important;" role="alert">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-shield-halved fs-5" style="color: var(--olive-medium);"></i>
+            <div class="small" style="color: var(--coffee-darkest);">
+                <strong>User-Specific Data Isolation:</strong> You are viewing personal evaluation data for <strong>@{{ current_user.username }}</strong>. Other users cannot see your predictions or statistics.
+            </div>
+        </div>
+        <span class="badge rounded-pill fw-semibold" style="background-color: #f7f4ee; color: var(--coffee-warm); border: 1px solid var(--beige-border);">
+            Account: @{{ current_user.username }}
+        </span>
+    </div>
+
+    {% if total_count == 0 %}
+    <!-- Empty State for User with No Predictions Yet -->
+    <div class="card shadow-sm p-5 text-center mb-4" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 68px; height: 68px; background-color: #f7f4ee; color: var(--coffee-muted); font-size: 1.8rem;">
+            <i class="fa-solid fa-chart-simple"></i>
+        </div>
+        <h4 class="fw-bold mb-1" style="color: var(--coffee-darkest);">No Evaluations Recorded for @{{ current_user.username }} Yet</h4>
+        <p class="text-secondary mx-auto mb-4" style="max-width: 520px;">
+            You haven't submitted any social media comments or screenshots for AI toxicity analysis under your account yet. Each user's evaluations remain strictly private to their own profile.
+        </p>
+        <div>
+            <a href="{{ url_for('index') }}" class="btn btn-saas-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                <i class="fa-solid fa-bolt me-2"></i> Run Your First Evaluation
+            </a>
         </div>
     </div>
+    {% endif %}
 
     <!-- Top Key Metrics Cards (4 Stat Cards) -->
     <div class="row g-3 mb-4">
@@ -179,13 +203,13 @@
         <div class="card-header border-bottom pt-4 px-4 pb-3 d-flex justify-content-between align-items-center" style="background-color: var(--beige-card); border-color: var(--beige-border) !important;">
             <div>
                 <h5 class="fw-bold mb-0" style="color: var(--coffee-darkest);">
-                    <i class="fa-solid fa-clock-rotate-left me-2" style="color: var(--olive-medium);"></i> Prediction History & Activity Log
+                    <i class="fa-solid fa-clock-rotate-left me-2" style="color: var(--olive-medium);"></i> My Prediction History & Activity Log
                 </h5>
-                <span class="small" style="color: var(--beige-muted);">All historical evaluations processed by this application</span>
+                <span class="small" style="color: var(--beige-muted);">Showing evaluations submitted from account <strong>@{{ current_user.username }}</strong> ({{ recent_records|length }} record{% if recent_records|length != 1 %}s{% endif %})</span>
             </div>
-            <form action="{{ url_for('clear_history') }}" method="POST" onsubmit="return confirm('Clear all recorded prediction history?');">
+            <form action="{{ url_for('clear_history') }}" method="POST" onsubmit="return confirm('Clear your personal prediction history?');">
                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                    <i class="fa-solid fa-trash me-1"></i> Clear History
+                    <i class="fa-solid fa-trash me-1"></i> Clear My History
                 </button>
             </form>
         </div>

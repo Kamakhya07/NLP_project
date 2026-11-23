@@ -743,9 +743,127 @@ class MongoDBManager:
         )
 
     @classmethod
+    def clear_user_prediction_history(cls, user_id: str) -> int:
+        """Deletes prediction history strictly for the specific user."""
+        if not user_id:
+            return 0
+        res = cls.predictions_col().delete_many({"user_id": str(user_id)})
+        return res.deleted_count
+
+    @classmethod
     def clear_prediction_history(cls) -> int:
         res = cls.predictions_col().delete_many({})
         return res.deleted_count
+
+    @classmethod
+    def get_user_prediction_history(cls, user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """Returns predictions submitted strictly by the specific user."""
+        if not user_id:
+            return []
+        cursor = (
+            cls.predictions_col()
+            .find({"user_id": str(user_id)})
+            .sort("timestamp", DESCENDING)
+            .limit(limit)
+        )
+        results = []
+        for doc in cursor:
+            doc["id"] = str(doc["_id"])[-6:]  # Short display ID
+            ts = doc.get("timestamp")
+            if isinstance(ts, datetime):
+                doc["timestamp"] = ts.strftime("%Y-%m-%d %H:%M:%S")
+            elif isinstance(ts, str):
+                doc["timestamp"] = ts
+            else:
+                doc["timestamp"] = "Just now"
+
+            conf = doc.get("confidence", 0.0)
+            if conf <= 1.0:
+                conf = conf * 100
+            doc["confidence"] = round(float(conf), 1)
+            results.append(doc)
+        return results
+
+    @classmethod
+    def get_user_analytics(cls, user_id: str) -> Dict[str, Any]:
+        """Calculates personalized analytics strictly for the specific user."""
+        empty_res = {
+            "total_count": 0,
+            "bullying_count": 0,
+            "non_bullying_count": 0,
+            "bullying_pct": 0,
+            "non_bullying_pct": 0,
+            "avg_confidence": 0.0,
+            "timeline_labels": [],
+            "timeline_confidences": [],
+            "timeline_colors": [],
+            "recent_records": []
+        }
+        if not user_id:
+            return empty_res
+
+        uid = str(user_id)
+        preds_col = cls.predictions_col()
+        total_count = preds_col.count_documents({"user_id": uid})
+        if total_count == 0:
+            return empty_res
+
+        # Bullying vs Non-Bullying
+        bullying_count = preds_col.count_documents({
+            "user_id": uid,
+            "prediction": {"$in": ["Bullying", "Cyberbullying"]}
+        })
+        non_bullying_count = total_count - bullying_count
+
+        # Avg confidence calculation
+        pipeline = [
+            {"$match": {"user_id": uid}},
+            {"$group": {"_id": None, "avg_conf": {"$avg": "$confidence"}}}
+        ]
+        conf_res = list(preds_col.aggregate(pipeline))
+        if conf_res and conf_res[0].get("avg_conf") is not None:
+            raw_avg = float(conf_res[0]["avg_conf"])
+            avg_confidence = round(raw_avg * 100, 1) if raw_avg <= 1.0 else round(raw_avg, 1)
+        else:
+            avg_confidence = 0.0
+
+        bullying_pct = round((bullying_count / total_count * 100), 1) if total_count > 0 else 0
+        non_bullying_pct = round((non_bullying_count / total_count * 100), 1) if total_count > 0 else 0
+
+        # Timeline (last 10 predictions in chronological order)
+        timeline_cursor = list(
+            preds_col.find({"user_id": uid})
+            .sort("timestamp", DESCENDING)
+            .limit(10)
+        )[::-1]
+
+        timeline_labels = []
+        timeline_confidences = []
+        timeline_colors = []
+        for doc in timeline_cursor:
+            short_id = f"#{str(doc['_id'])[-4:]}"
+            timeline_labels.append(short_id)
+            c = float(doc.get("confidence", 0.0))
+            if c <= 1.0:
+                c = c * 100
+            timeline_confidences.append(round(c, 1))
+            is_bully = doc.get("prediction") in ["Bullying", "Cyberbullying"]
+            timeline_colors.append("#b83a3a" if is_bully else "#556b2f")
+
+        recent_records = cls.get_user_prediction_history(user_id=uid, limit=100)
+
+        return {
+            "total_count": total_count,
+            "bullying_count": bullying_count,
+            "non_bullying_count": non_bullying_count,
+            "bullying_pct": bullying_pct,
+            "non_bullying_pct": non_bullying_pct,
+            "avg_confidence": avg_confidence,
+            "timeline_labels": timeline_labels,
+            "timeline_confidences": timeline_confidences,
+            "timeline_colors": timeline_colors,
+            "recent_records": recent_records
+        }
 
     @classmethod
     def get_platform_analytics(cls) -> Dict[str, Any]:
