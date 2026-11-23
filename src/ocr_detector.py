@@ -18,7 +18,10 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Union, Optional
 from PIL import Image, ImageEnhance, ImageOps
-import winocr
+try:
+    import winocr
+except (ImportError, ModuleNotFoundError, Exception):
+    winocr = None
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +78,16 @@ class ScreenshotOCR:
                     "error": f"Unsupported image input type: {type(image_input)}"
                 }
 
+            if winocr is None:
+                logger.info("winocr is not available on this platform (non-Windows). OCR disabled.")
+                return {
+                    "success": False,
+                    "extracted_text": "",
+                    "lines": [],
+                    "word_count": 0,
+                    "error": "OCR text extraction is only supported on Windows host environments."
+                }
+
             # 2. Preprocess image
             processed_img = self.preprocess_image(img)
 
@@ -117,6 +130,17 @@ class ScreenshotOCR:
                 "word_count": 0,
                 "error": f"Failed to extract text from screenshot: {str(e)}"
             }
+
+    def extract_text_and_boxes(self, image_input: Union[str, Path, bytes, io.BytesIO, Image.Image], lang: str = "en") -> Dict[str, Any]:
+        """Convenience method returning extracted text and metadata."""
+        res = self.extract_text(image_input, lang)
+        return {
+            "text": res.get("extracted_text", ""),
+            "success": res.get("success", False),
+            "lines": res.get("lines", []),
+            "words": [],
+            "boxes": []
+        }
 
 # Singleton instance
 ocr_detector = ScreenshotOCR()

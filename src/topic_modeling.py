@@ -17,7 +17,7 @@ from sklearn.decomposition import LatentDirichletAllocation
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path("D:/TY/NLP-project")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = PROJECT_ROOT / "models"
 LDA_MODEL_PATH = MODELS_DIR / "lda_model.joblib"
 LDA_VEC_PATH = MODELS_DIR / "lda_vectorizer.joblib"
