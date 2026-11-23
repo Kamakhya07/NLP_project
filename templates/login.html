@@ -299,20 +299,20 @@ html, body {
             {% endif %}
         {% endwith %}
 
-        <!-- Role Pills: User Demo (Selected) vs Admin Demo -->
+        <!-- Role Pills: User Demo (Selected) vs Admin Login (Requires Credentials) -->
         <div class="role-pills-row">
-            <a href="{{ url_for('quick_login', username='user') }}" class="role-pill-btn role-pill-user" title="Quick Login as User Demo">
+            <button type="button" class="role-pill-btn role-pill-user" id="userPillBtn" onclick="switchToUserLogin()" title="User Mode & Demo Accounts">
                 <i class="fa-regular fa-user"></i>
                 <span>User Demo</span>
-            </a>
-            <a href="{{ url_for('quick_login', username='admin') }}" class="role-pill-btn role-pill-admin" title="Quick Login as Admin Demo">
+            </button>
+            <button type="button" class="role-pill-btn role-pill-admin" id="adminPillBtn" onclick="switchToAdminLogin()" title="Admin Login (Password Required)">
                 <i class="fa-solid fa-shield-halved"></i>
-                <span>Admin Demo</span>
-            </a>
+                <span>Admin Login</span>
+            </button>
         </div>
 
         <!-- 5 Demo Users (Click to Use) -->
-        <div class="mb-3">
+        <div class="mb-3" id="demoUsersSection">
             <div class="demo-users-label">Demo Users (click to use)</div>
             <div class="demo-users-pills">
                 <a href="{{ url_for('quick_login', username='user') }}" class="demo-user-tag demo-user-tag-selected" title="Alex Rivera (@user)">
@@ -334,7 +334,7 @@ html, body {
         </div>
 
         <!-- Divider with "or" -->
-        <div class="d-flex align-items-center my-2 mb-3">
+        <div class="d-flex align-items-center my-2 mb-3" id="orDivider">
             <hr class="flex-grow-1 m-0" style="border-color: #ede6dc;">
             <span class="px-3 small" style="color: #8c8275; font-size: 0.78rem;">or</span>
             <hr class="flex-grow-1 m-0" style="border-color: #ede6dc;">
@@ -375,6 +375,71 @@ html, body {
 
 {% block extra_js %}
 <script>
+function switchToAdminLogin() {
+    const userPill = document.getElementById('userPillBtn');
+    const adminPill = document.getElementById('adminPillBtn');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const demoSection = document.getElementById('demoUsersSection');
+    const orDivider = document.getElementById('orDivider');
+
+    if (adminPill && userPill) {
+        adminPill.style.backgroundColor = '#3b2416';
+        adminPill.style.color = '#ffffff';
+        adminPill.style.borderColor = '#3b2416';
+
+        userPill.style.backgroundColor = '#ffffff';
+        userPill.style.color = '#1e130b';
+        userPill.style.borderColor = '#ded6cc';
+    }
+
+    if (demoSection) demoSection.style.display = 'none';
+    if (orDivider) orDivider.style.display = 'none';
+
+    if (usernameInput) {
+        usernameInput.value = 'admin';
+        usernameInput.setAttribute('readonly', 'readonly');
+    }
+    if (passwordInput) {
+        passwordInput.value = '';
+        passwordInput.placeholder = 'Enter Admin Password';
+        passwordInput.focus();
+    }
+}
+
+function switchToUserLogin() {
+    const userPill = document.getElementById('userPillBtn');
+    const adminPill = document.getElementById('adminPillBtn');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const demoSection = document.getElementById('demoUsersSection');
+    const orDivider = document.getElementById('orDivider');
+
+    if (adminPill && userPill) {
+        userPill.style.backgroundColor = '#3b2416';
+        userPill.style.color = '#ffffff';
+        userPill.style.borderColor = '#3b2416';
+
+        adminPill.style.backgroundColor = '#ffffff';
+        adminPill.style.color = '#1e130b';
+        adminPill.style.borderColor = '#ded6cc';
+    }
+
+    if (demoSection) demoSection.style.display = 'block';
+    if (orDivider) orDivider.style.display = 'flex';
+
+    if (usernameInput) {
+        usernameInput.value = '';
+        usernameInput.removeAttribute('readonly');
+        usernameInput.placeholder = 'Username';
+        usernameInput.focus();
+    }
+    if (passwordInput) {
+        passwordInput.value = '';
+        passwordInput.placeholder = 'Password';
+    }
+}
+
 function togglePasswordVisibility() {
     const passwordInput = document.getElementById('password');
     const eyeIcon = document.getElementById('passwordEyeIcon');

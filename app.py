@@ -255,6 +255,11 @@ def quick_login(username):
         flash(f"Demo user '{username}' was not found.", "warning")
         return redirect(url_for("login"))
 
+    # Security: Administrator access strictly requires manual credential login
+    if user.get("role") == "admin":
+        flash("Administrator access strictly requires credential authentication. Please sign in below.", "warning")
+        return redirect(url_for("login"))
+
     if user.get("status") == "blocked":
         flash(f"Demo user @{username} is currently suspended for safety violations. Please unblock it from the Admin Desk or choose another user.", "danger")
         return redirect(url_for("login"))
