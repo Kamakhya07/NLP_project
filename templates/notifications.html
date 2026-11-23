@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications | CyberShield Social{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom" style="border-color: var(--beige-border) !important;">
+        <div>
+            <h3 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
+                <i class="fa-solid fa-bell" style="color: var(--olive-medium);"></i> Notifications & Safety Alerts
+            </h3>
+            <p class="small mb-0" style="color: var(--beige-muted);">System updates, moderation verdicts, and cyberbullying alerts</p>
+        </div>
+        {% if unread_notifs_count > 0 %}
+        <form action="{{ url_for('mark_notifications_read') }}" method="POST">
+            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="color: var(--coffee-warm); border-color: var(--beige-border);">
+                <i class="fa-solid fa-check-double me-1"></i> Mark All as Read
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Active Strikes Summary -->
+    {% if current_user and current_user.strikes_count > 0 %}
+    <div class="alert rounded-3 p-3 mb-4 shadow-sm d-flex align-items-center gap-3" style="{% if current_user.status == 'blocked' %}background-color: #faeaea; border: 1px solid #e8b8b8; color: var(--danger-color);{% else %}background-color: #fdf5e6; border: 1px solid #fae1b8; color: var(--coffee-darkest);{% endif %}">
+        <div class="fs-2 flex-shrink-0">
+            {% if current_user.status == 'blocked' %}
+            <i class="fa-solid fa-user-slash text-danger"></i>
+            {% else %}
+            <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+            {% endif %}
+        </div>
+        <div class="flex-grow-1">
+            <div class="fw-bold fs-6">
+                {% if current_user.status == 'blocked' %}
+                Account Blocked & Suspended
+                {% else %}
+                Account Safety Warning: {{ current_user.strikes_count }} Strike(s) Recorded
+                {% endif %}
+            </div>
+            <div class="small opacity-75">
+                {% if current_user.status == 'blocked' %}
+                An administrator has suspended your posting privileges due to repeated violations.
+                {% else %}
+                CyberShield AI has withheld your comments from the public feed. Continued cyberbullying violations will lead to permanent account blocking.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Notifications List -->
+    <div class="notifications-list d-flex flex-column gap-3">
+        {% if notifications %}
+            {% for notif in notifications %}
+            <div class="card p-3 shadow-sm" style="background-color: #ffffff; border: 1px solid {% if not notif.is_read %}var(--olive-medium){% else %}var(--beige-border){% endif %}; border-radius: 12px;">
+                <div class="d-flex gap-3 align-items-start">
+                    <div class="p-2 rounded-circle flex-shrink-0" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+                        {% if notif.type == 'hate_speech_warning' or notif.type == 'account_blocked' %}background-color: #faeaea; color: var(--danger-color);
+                        {% elif notif.type == 'post_approved' %}background-color: var(--olive-tint); color: var(--olive-dark);
+                        {% else %}background-color: #f0e9dd; color: var(--coffee-warm);{% endif %}">
+                        {% if notif.type == 'hate_speech_warning' %}
+                        <i class="fa-solid fa-shield-virus fs-5"></i>
+                        {% elif notif.type == 'account_blocked' %}
+                        <i class="fa-solid fa-ban fs-5"></i>
+                        {% elif notif.type == 'post_approved' %}
+                        <i class="fa-solid fa-circle-check fs-5"></i>
+                        {% else %}
+                        <i class="fa-solid fa-info fs-5"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <h6 class="fw-bold mb-0" style="color: var(--coffee-darkest);">{{ notif.title }}</h6>
+                            <span class="fs-xs text-muted">
+                                {{ notif.created_at.strftime('%b %d, %H:%M') if notif.created_at else 'Recent' }}
+                            </span>
+                        </div>
+                        <p class="small mb-2" style="color: var(--text-secondary);">{{ notif.message }}</p>
+                        
+                        {% if not notif.is_read %}
+                        <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: var(--olive-medium); color: #ffffff;">
+                            New Alert
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card p-5 text-center" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                <i class="fa-regular fa-bell-slash fs-1 mb-2" style="color: var(--beige-muted);"></i>
+                <h5 class="fw-bold" style="color: var(--coffee-darkest);">No notifications</h5>
+                <p class="small text-muted mb-0">Your notification box is currently clear. Clean posts go straight to the feed!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

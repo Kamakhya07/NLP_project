@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CyberShield SaaS Admin Console{% endblock %}</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Chart.js CDN for AI Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            /* Rich Solid Coffee Palette */
+            --sidebar-bg: #241710;
+            --sidebar-hover: #332217;
+            --sidebar-active: #556b2f;
+            --sidebar-border: #3d2a1d;
+            
+            /* Rich Solid Beige / Linen Palette */
+            --body-bg: #f7f4ee;
+            --card-bg: #ffffff;
+            --card-border: #ded5c5;
+            --card-border-subtle: #eae2d5;
+            
+            /* Rich Solid Accents */
+            --primary-accent: #4d3625;        /* Coffee */
+            --primary-accent-hover: #382618;
+            --success-color: #556b2f;         /* Olive */
+            --success-hover: #445625;
+            --danger-color: #b83a3a;          /* Terracotta Red */
+            --danger-hover: #9c2e2e;
+            --warning-color: #b47a1e;         /* Warm Amber */
+            
+            --text-main: #241710;             /* Coffee Dark */
+            --text-muted: #786858;
+            --text-light: #fdfbf7;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--body-bg);
+            background-image: none !important;
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 1. Sidebar Styles (Solid Coffee) */
+        .saas-sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--sidebar-border);
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1040;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(222, 213, 197, 0.12);
+            color: #fdfbf7;
+            text-decoration: none;
+        }
+
+        .brand-logo-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background-color: var(--success-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            background-image: none !important;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 16px 12px;
+            margin: 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar-nav-item {
+            margin-bottom: 4px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: #ded5c5;
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .sidebar-link i {
+            font-size: 1.05rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-link:hover {
+            background-color: var(--sidebar-hover);
+            color: #ffffff;
+        }
+
+        .sidebar-link.active {
+            background-color: var(--sidebar-active);
+            color: #ffffff;
+            box-shadow: none !important;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(222, 213, 197, 0.12);
+            background-color: #1a100b;
+        }
+
+        .admin-profile-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background-color: rgba(222, 213, 197, 0.08);
+            color: #fdfbf7;
+        }
+
+        .admin-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: var(--primary-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+            background-image: none !important;
+        }
+
+        /* 2. Main Workspace Content (Solid Warm Beige & Clean Cards) */
+        .saas-main-wrapper {
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            background-color: var(--body-bg);
+        }
+
+        .saas-topbar {
+            height: 64px;
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+
+        .saas-content-area {
+            padding: 32px;
+            flex-grow: 1;
+        }
+
+        /* Modern SaaS Cards (Solid Surfaces) */
+        .saas-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgba(36, 23, 16, 0.04);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .saas-card:hover {
+            border-color: #c4b69f;
+            box-shadow: 0 4px 12px 0 rgba(36, 23, 16, 0.06);
+        }
+
+        /* KPI Stat Cards (Solid Beige, Coffee & Olive Accents) */
+        .kpi-card {
+            padding: 24px;
+            border-radius: 12px;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 1px 3px rgba(36, 23, 16, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            background-image: none !important;
+        }
+
+        .kpi-val {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .kpi-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Solid SaaS Action Buttons */
+        .btn-saas-primary {
+            background-color: var(--primary-accent) !important;
+            color: #ffffff !important;
+            border: 1px solid var(--primary-accent-hover) !important;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 16px;
+            background-image: none !important;
+            transition: background 0.15s ease;
+        }
+
+        .btn-saas-primary:hover {
+            background-color: var(--primary-accent-hover) !important;
+        }
+
+        .btn-saas-approve {
+            background-color: var(--success-color) !important;
+            color: #ffffff !important;
+            border: 1px solid var(--success-hover) !important;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 6px 14px;
+            background-image: none !important;
+        }
+
+        .btn-saas-approve:hover {
+            background-color: var(--success-hover) !important;
+        }
+
+        .btn-saas-reject {
+            background-color: var(--danger-color) !important;
+            color: #ffffff !important;
+            border: 1px solid var(--danger-hover) !important;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 6px 14px;
+            background-image: none !important;
+        }
+
+        .btn-saas-reject:hover {
+            background-color: var(--danger-hover) !important;
+        }
+
+        .btn-saas-block-outline {
+            background-color: transparent !important;
+            color: var(--danger-color) !important;
+            border: 1px solid var(--danger-color) !important;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 6px 14px;
+            background-image: none !important;
+        }
+
+        .btn-saas-block-outline:hover {
+            background-color: #fdf2f2 !important;
+            color: #9c2e2e !important;
+        }
+
+        /* Mobile Hamburger & Backdrop */
+        .mobile-toggle-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-main);
+        }
+
+        @media (max-width: 991.98px) {
+            .saas-sidebar {
+                transform: translateX(-100%);
+            }
+            .saas-sidebar.show {
+                transform: translateX(0);
+            }
+            .saas-main-wrapper {
+                margin-left: 0;
+            }
+            .mobile-toggle-btn {
+                display: block;
+            }
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(36, 23, 16, 0.6);
+                z-index: 1035;
+            }
+            .sidebar-backdrop.show {
+                display: block;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Mobile Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
+    <!-- 1. Fixed Dark Coffee SaaS Sidebar (Strictly No Gradients) -->
+    <aside class="saas-sidebar" id="saasSidebar">
+        <!-- Brand Header -->
+        <a href="{{ url_for('admin_dashboard') }}" class="sidebar-brand">
+            <div class="brand-logo-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <div class="fw-bold fs-6 lh-1">CyberShield</div>
+                <div class="small fs-xs" style="color: #ded5c5 !important;">Admin SaaS Console</div>
+            </div>
+        </a>
+
+        <!-- Navigation Links (History tab removed as requested; history is now integrated in Dashboard) -->
+        <ul class="sidebar-nav">
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link {% if active_tab == 'dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_queue') }}" class="sidebar-link {% if active_tab == 'queue' %}active{% endif %} justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-shield-virus"></i>
+                        <span>Moderation Queue</span>
+                    </div>
+                    {% if pending_quarantined_count and pending_quarantined_count > 0 %}
+                    <span class="badge rounded-pill px-2" style="background-color: var(--danger-color); color: #ffffff; font-size: 0.72rem;">{{ pending_quarantined_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_users') }}" class="sidebar-link {% if active_tab == 'users' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>User Management</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_analytics') }}" class="sidebar-link {% if active_tab == 'analytics' %}active{% endif %}">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>AI Analytics</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_activity') }}" class="sidebar-link {% if active_tab == 'activity' %}active{% endif %}">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Activity Logs</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{{ url_for('admin_settings') }}" class="sidebar-link {% if active_tab == 'settings' %}active{% endif %}">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Sidebar Footer / Admin Session -->
+        <div class="sidebar-footer">
+            <a href="{{ url_for('feed') }}" class="btn btn-sm w-100 mb-3 text-start d-flex align-items-center gap-2 text-light" style="background-color: var(--sidebar-hover); border: 1px solid var(--sidebar-border);">
+                <i class="fa-solid fa-arrow-left text-warning"></i>
+                <span class="small">Back to Social Feed</span>
+            </a>
+            
+            <div class="admin-profile-badge">
+                <div class="admin-avatar">
+                    {{ current_user.display_name[0]|upper if current_user else 'A' }}
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="small fw-semibold text-truncate">{{ current_user.display_name if current_user else 'Admin' }}</div>
+                    <div class="fs-xs text-truncate" style="color: #ded5c5 !important;">@{{ current_user.username if current_user else 'admin' }}</div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="small ms-auto" title="Sign Out">
+                    <i class="fa-solid fa-power-off text-danger"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 2. Main Workspace -->
+    <div class="saas-main-wrapper">
+        <!-- Topbar -->
+        <header class="saas-topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="mobile-toggle-btn" type="button" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: #eaf0dd; color: #3f4e1c; border: 1px solid #c9d8ad;">
+                        <i class="fa-solid fa-circle-check me-1" style="color: #556b2f;"></i> MongoDB Active
+                    </span>
+                    <span class="text-muted small d-none d-md-inline">&bull;</span>
+                    <span class="text-secondary small d-none d-md-inline">Model: <strong>{{ current_model_name|default('TF-IDF + Logistic Regression') }}</strong></span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('admin_queue') }}" class="btn btn-sm position-relative rounded-pill px-3" style="border: 1px solid var(--danger-color); color: var(--danger-color);">
+                    <i class="fa-solid fa-shield-virus me-1"></i> Intercepted Queue
+                    {% if pending_quarantined_count and pending_quarantined_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" style="background-color: var(--danger-color); color: #ffffff;">
+                        {{ pending_quarantined_count }}
+                    </span>
+                    {% endif %}
+                </a>
+            </div>
+        </header>
+
+        <!-- Flash Notifications -->
+        <div class="container-fluid px-4 pt-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm d-flex align-items-center gap-2 mb-3" role="alert">
+                            {% if category == 'danger' %}
+                                <i class="fa-solid fa-circle-exclamation fs-5 flex-shrink-0 text-danger"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fa-solid fa-triangle-exclamation fs-5 flex-shrink-0 text-warning"></i>
+                            {% elif category == 'info' %}
+                                <i class="fa-solid fa-circle-info fs-5 flex-shrink-0 text-info"></i>
+                            {% else %}
+                                <i class="fa-solid fa-circle-check fs-5 flex-shrink-0 text-success"></i>
+                            {% endif %}
+                            <div class="flex-grow-1 small fw-medium">{{ message }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Main View Dynamic Area -->
+        <main class="saas-content-area">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Bootstrap 5.3 JS Bundle CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('saasSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            sidebar.classList.toggle('show');
+            backdrop.classList.toggle('show');
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

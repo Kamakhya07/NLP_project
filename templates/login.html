@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In | CyberShield Social{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm overflow-hidden" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                <div class="card-header p-4 text-center border-bottom" style="background-color: var(--beige-card); border-color: var(--beige-border) !important;">
+                    <div class="brand-icon-wrapper mx-auto mb-2" style="width: 48px; height: 48px; font-size: 1.4rem; background-color: var(--coffee-warm); color: white;">
+                        <i class="fa-solid fa-shield-halved text-warning"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1" style="color: var(--coffee-darkest);">Welcome to CyberShield</h4>
+                    <p class="small mb-0" style="color: var(--beige-muted);">Sign in to publish comments and view moderation status</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('login') }}">
+                        <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label small fw-semibold" style="color: var(--coffee-warm);">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text border-end-0" style="background-color: #f7f4ee; border-color: var(--beige-border); color: var(--coffee-muted);">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" style="border-color: var(--beige-border); color: var(--coffee-darkest);" id="username" name="username" placeholder="Enter username" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="password" class="form-label small fw-semibold mb-0" style="color: var(--coffee-warm);">Password</label>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text border-end-0" style="background-color: #f7f4ee; border-color: var(--beige-border); color: var(--coffee-muted);">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control border-start-0" style="border-color: var(--beige-border); color: var(--coffee-darkest);" id="password" name="password" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-saas-primary w-100 py-2 fw-semibold rounded-pill shadow-sm mb-3">
+                            <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign In
+                        </button>
+                    </form>
+
+                    <div class="d-flex align-items-center my-3">
+                        <hr class="flex-grow-1" style="border-color: var(--beige-border);">
+                        <span class="px-3 small" style="color: var(--beige-muted);">Demo Quick Login</span>
+                        <hr class="flex-grow-1" style="border-color: var(--beige-border);">
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <button type="button" class="btn w-100 btn-sm rounded-3 py-2 text-start d-flex align-items-center gap-2" style="background-color: #f7f4ee; border: 1px solid var(--beige-border); color: var(--coffee-darkest);" onclick="quickFill('admin', 'admin123')">
+                                <i class="fa-solid fa-user-shield fs-5 text-warning"></i>
+                                <div>
+                                    <div class="fw-bold small lh-1">Admin</div>
+                                    <div class="fs-xs text-muted">Moderator</div>
+                                </div>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" class="btn w-100 btn-sm rounded-3 py-2 text-start d-flex align-items-center gap-2" style="background-color: #eaf0dd; border: 1px solid #c9d8ad; color: var(--olive-dark);" onclick="quickFill('user', 'user123')">
+                                <i class="fa-solid fa-circle-user fs-5" style="color: var(--olive-medium);"></i>
+                                <div>
+                                    <div class="fw-bold small lh-1">Demo User</div>
+                                    <div class="fs-xs" style="color: var(--olive-warm);">Poster</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="text-center pt-2 border-top" style="border-color: var(--beige-border) !important;">
+                        <span class="small" style="color: var(--beige-muted);">Don't have an account?</span>
+                        <a href="{{ url_for('register') }}" class="small fw-semibold ms-1 text-decoration-none" style="color: var(--olive-dark);">Sign up</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function quickFill(user, pass) {
+    document.getElementById('username').value = user;
+    document.getElementById('password').value = pass;
+}
+</script>
+{% endblock %}

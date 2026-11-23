@@ -17,7 +17,9 @@ import os
 import sqlite3
 import logging
 from datetime import datetime
+from functools import wraps
 from typing import Optional, Dict, Any, List
+from bson import ObjectId
 
 from flask import (
     Flask,
@@ -27,6 +29,7 @@ from flask import (
     url_for,
     flash,
     jsonify,
+    session,
     abort
 )
 
@@ -38,6 +41,7 @@ from src.multilingual import MultilingualProcessor
 from src.information_extraction import InformationExtractor
 from src.explainability import TokenExplainer
 from src.ocr_detector import ocr_detector
+from src.mongo_db import MongoDBManager
 
 genai_service = GenAIExplainer()
 topic_modeler = LDATopicModeler()
@@ -116,6 +120,51 @@ def init_db() -> None:
 # Initialize database table on app startup
 init_db()
 
+# Initialize MongoDB database & seed default accounts
+try:
+    MongoDBManager.initialize_database()
+except Exception as mongo_init_err:
+    logger.warning(f"Notice during MongoDB initialization: {mongo_init_err}")
+
+
+# ------------------------------------------------------------------------------
+# Auth & Context Helpers
+# ------------------------------------------------------------------------------
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session or not MongoDBManager.get_user_by_id(session["user_id"]):
+            flash("Please sign in to access this feature.", "warning")
+            return redirect(url_for("login", next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Administrator login required.", "danger")
+            return redirect(url_for("login", next=request.url))
+        user = MongoDBManager.get_user_by_id(session["user_id"])
+        if not user or user.get("role") != "admin":
+            flash("Access denied: Administrator privileges required.", "danger")
+            return redirect(url_for("feed"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@app.context_processor
+def inject_user_context():
+    """Provides current_user and unread_notifs_count to all Jinja templates."""
+    user_id = session.get("user_id")
+    user = MongoDBManager.get_user_by_id(user_id) if user_id else None
+    unread_count = MongoDBManager.get_unread_count(user_id) if user_id else 0
+    return {
+        "current_user": user,
+        "unread_notifs_count": unread_count
+    }
+
 # ------------------------------------------------------------------------------
 # Initialize Predictor on Startup (load model once)
 # ------------------------------------------------------------------------------
@@ -128,7 +177,504 @@ except Exception as e:
 
 
 # ------------------------------------------------------------------------------
-# Routes
+# Social Media & Authentication Routes
+# ------------------------------------------------------------------------------
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """User and Administrator authentication."""
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        next_url = request.form.get("next") or url_for("feed")
+
+        user = MongoDBManager.authenticate(username, password)
+        if not user:
+            flash("Invalid username or password. Please try again.", "danger")
+            return render_template("login.html")
+
+        if user.get("status") == "blocked":
+            flash("Your account has been blocked by an administrator for cyberbullying violations.", "danger")
+            return render_template("login.html")
+
+        session["user_id"] = str(user["_id"])
+        session["username"] = user["username"]
+        session["role"] = user["role"]
+        session["display_name"] = user.get("display_name", user["username"])
+        flash(f"Welcome back, {session['display_name']}!", "success")
+
+        if user["role"] == "admin":
+            return redirect(url_for("admin_dashboard"))
+        return redirect(next_url)
+
+    return render_template("login.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """User account creation."""
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        display_name = request.form.get("display_name", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+
+        if not username or not password or not email:
+            flash("All fields are required.", "warning")
+            return render_template("register.html")
+
+        try:
+            new_user = MongoDBManager.create_user(
+                username=username,
+                password=password,
+                email=email,
+                display_name=display_name
+            )
+            session["user_id"] = str(new_user["_id"])
+            session["username"] = new_user["username"]
+            session["role"] = new_user["role"]
+            session["display_name"] = new_user["display_name"]
+            flash(f"Account created successfully! Welcome to CyberShield, {new_user['display_name']}!", "success")
+            return redirect(url_for("feed"))
+        except ValueError as ve:
+            flash(str(ve), "danger")
+            return render_template("register.html")
+        except Exception as e:
+            logger.error(f"Registration error: {e}", exc_info=True)
+            flash("An error occurred during registration. Please try again.", "danger")
+            return render_template("register.html")
+
+    return render_template("register.html")
+
+
+@app.route("/logout")
+def logout():
+    """Sign out current user."""
+    session.clear()
+    flash("You have been signed out.", "info")
+    return redirect(url_for("feed"))
+
+
+@app.route("/feed")
+def feed():
+    """Twitter-like social timeline with published, safe posts."""
+    posts = MongoDBManager.get_feed_posts(limit=50)
+    return render_template("feed.html", posts=posts)
+
+
+@app.route("/post/create", methods=["POST"])
+@login_required
+def create_post():
+    """
+    Submits a post/comment.
+    Scans with CyberShield AI + OCR (if screenshot attached) + LIME explainability.
+    If hate speech is detected, quarantines post, alerts user, and routes to Admin Desk.
+    """
+    user = MongoDBManager.get_user_by_id(session["user_id"])
+    if not user or user.get("status") == "blocked":
+        flash("Your account is blocked. You cannot post content.", "danger")
+        return redirect(url_for("feed"))
+
+    content = request.form.get("content", "").strip()
+    if not content:
+        flash("Post content cannot be empty.", "warning")
+        return redirect(url_for("feed"))
+
+    image_file = request.files.get("image")
+    saved_image_rel_path = None
+    ocr_extracted_text = None
+
+    if image_file and image_file.filename:
+        from werkzeug.utils import secure_filename
+        sec_name = secure_filename(image_file.filename)
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        fname = f"post_{timestamp_str}_{sec_name}"
+        save_path = os.path.join(UPLOAD_FOLDER, fname)
+        image_file.save(save_path)
+        saved_image_rel_path = f"uploads/{fname}"
+
+        # Extract OCR text from screenshot
+        try:
+            ocr_res = ocr_detector.extract_text_and_boxes(save_path)
+            if ocr_res.get("text"):
+                ocr_extracted_text = ocr_res["text"].strip()
+        except Exception as ocr_err:
+            logger.warning(f"OCR extraction error on post image: {ocr_err}")
+
+    # Build text for AI inference (text + OCR text if available)
+    combined_text_for_ai = content
+    if ocr_extracted_text:
+        combined_text_for_ai = f"{content} [Image Text]: {ocr_extracted_text}"
+
+    # Run AI inference
+    pred_res = predictor.predict(combined_text_for_ai)
+    pred_label = pred_res.get("prediction", "Non-Bullying")
+    confidence = pred_res.get("confidence", 0.5)
+    # Check if confidence is percentage (e.g. 96.5) or decimal (0.965)
+    conf_norm = confidence / 100.0 if confidence > 1.0 else confidence
+
+    is_hate = (pred_label in ("Bullying", "Cyberbullying") or pred_res.get("label") == 1)
+
+    # Run Token-Level XAI to highlight toxic words
+    toxic_tokens = []
+    try:
+        xai_data = token_explainer.explain(combined_text_for_ai, predictor=predictor)
+        for tok in xai_data.get("tokens", []):
+            tok_word = tok.get("word") or tok.get("token")
+            tok_weight = tok.get("weight", 0.0)
+            if tok.get("direction") == "bullying" or tok_weight > 0.05:
+                toxic_tokens.append({
+                    "token": tok_word,
+                    "score": round(float(tok_weight), 4),
+                    "is_toxic": True
+                })
+    except Exception as xai_err:
+        logger.warning(f"XAI attribution error: {xai_err}")
+
+    risk_score = "High" if (is_hate and conf_norm > 0.8) else ("Medium" if is_hate else "Safe")
+
+    moderation_info = {
+        "prediction": "Cyberbullying" if is_hate else "Non-Cyberbullying",
+        "confidence": round(float(conf_norm), 4),
+        "risk_score": risk_score,
+        "model_used": SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type),
+        "toxic_tokens": toxic_tokens,
+        "ocr_text": ocr_extracted_text,
+        "intercepted": is_hate
+    }
+
+    MongoDBManager.create_post(
+        user_id=str(user["_id"]),
+        username=user["username"],
+        display_name=user.get("display_name", user["username"]),
+        content=content,
+        image_path=saved_image_rel_path,
+        moderation_info=moderation_info
+    )
+
+    # Record to MongoDB predictions collection for analytics
+    MongoDBManager.save_prediction(
+        text_snippet=content,
+        prediction=pred_label,
+        confidence=confidence,
+        model_type=predictor.model_type,
+        user_id=str(user["_id"])
+    )
+
+    if is_hate:
+        conf_pct = round(conf_norm * 100, 1)
+        flash(
+            f"⚠️ Hate Speech / Cyberbullying Intercepted ({conf_pct}% confidence)! "
+            f"Your tweet was withheld from the public timeline and submitted to Admin Moderation.",
+            "danger"
+        )
+    else:
+        flash("Tweet published to timeline successfully!", "success")
+
+    return redirect(url_for("feed"))
+
+
+@app.route("/post/<post_id>/like", methods=["POST"])
+def like_post(post_id):
+    """Increment like counter on a published post."""
+    try:
+        MongoDBManager.posts_col().update_one(
+            {"_id": ObjectId(post_id)},
+            {"$inc": {"likes_count": 1}}
+        )
+    except Exception as e:
+        logger.error(f"Error liking post {post_id}: {e}")
+    return redirect(url_for("feed"))
+
+
+@app.route("/notifications")
+@login_required
+def notifications():
+    """Displays user's safety alerts and moderation decisions."""
+    user_id = session["user_id"]
+    user_notifs = MongoDBManager.get_user_notifications(user_id)
+    return render_template("notifications.html", notifications=user_notifs)
+
+
+@app.route("/notifications/mark-read", methods=["POST"])
+@login_required
+def mark_notifications_read():
+    """Mark all notifications as read."""
+    user_id = session["user_id"]
+    MongoDBManager.mark_notifications_as_read(user_id)
+    flash("All notifications marked as read.", "info")
+    return redirect(url_for("notifications"))
+
+
+# ------------------------------------------------------------------------------
+# Admin Moderation Desk Routes
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Modern SaaS Admin Panel Routes
+# ------------------------------------------------------------------------------
+@app.route("/admin")
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    """1. SaaS Dashboard Overview with 4 KPI cards, recent activity, and integrated moderation history."""
+    analytics = MongoDBManager.get_platform_analytics()
+    quarantined = MongoDBManager.get_quarantined_posts()
+    recent_activities = MongoDBManager.get_activity_logs(limit=6)
+    history_posts = MongoDBManager.get_moderation_history(limit=50)
+
+    return render_template(
+        "admin/dashboard.html",
+        active_tab="dashboard",
+        analytics=analytics,
+        pending_quarantined_count=len(quarantined),
+        pending_posts_preview=quarantined[:4],
+        recent_activities=recent_activities,
+        history_posts=history_posts,
+        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type)
+    )
+
+
+@app.route("/admin/queue")
+@admin_required
+def admin_queue():
+    """2. Moderation Queue: Compact cards, LIME attribution evidence accordion, and action buttons."""
+    quarantined = MongoDBManager.get_quarantined_posts()
+
+    # Pre-populate author strike counts
+    for p in quarantined:
+        u = MongoDBManager.get_user_by_id(p.get("user_id"))
+        p["author_strikes"] = u.get("strikes_count", 1) if u else 1
+
+    return render_template(
+        "admin/queue.html",
+        active_tab="queue",
+        quarantined_posts=quarantined,
+        pending_quarantined_count=len(quarantined),
+        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type)
+    )
+
+
+@app.route("/admin/users")
+@admin_required
+def admin_users():
+    """3. User Management: Search, filter by role/status, sort by strikes, with admin protection."""
+    search_query = request.args.get("search", "").strip()
+    role_filter = request.args.get("role", "all").strip().lower()
+    status_filter = request.args.get("status", "all").strip().lower()
+    sort_by = request.args.get("sort_by", "created_at").strip().lower()
+
+    users = MongoDBManager.get_users_filtered(
+        search=search_query,
+        role=role_filter,
+        status=status_filter,
+        sort_by=sort_by
+    )
+
+    pending_quarantined_count = len(MongoDBManager.get_quarantined_posts())
+
+    return render_template(
+        "admin/users.html",
+        active_tab="users",
+        users=users,
+        search_query=search_query,
+        current_role=role_filter,
+        current_status=status_filter,
+        current_sort=sort_by,
+        pending_quarantined_count=pending_quarantined_count,
+        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type)
+    )
+
+
+@app.route("/admin/analytics")
+@admin_required
+def admin_analytics():
+    """4. AI Analytics: Confidence distribution, Cardiff TweetEval empirical benchmarks, and evaluation charts."""
+    analytics = MongoDBManager.get_platform_analytics()
+    pending_quarantined_count = len(MongoDBManager.get_quarantined_posts())
+
+    # Load actual benchmark data from reports/ml_results.json if present
+    eval_metrics = {}
+    try:
+        results_path = os.path.join(BASE_DIR, "reports", "ml_results.json")
+        if os.path.exists(results_path):
+            import json
+            with open(results_path, "r", encoding="utf-8") as f:
+                res_data = json.load(f)
+                active_key = predictor.model_type
+                if active_key in res_data:
+                    eval_metrics = res_data[active_key].get("test_metrics", {})
+    except Exception as e:
+        logger.warning(f"Notice reading ml_results.json: {e}")
+
+    return render_template(
+        "admin/analytics.html",
+        active_tab="analytics",
+        analytics=analytics,
+        eval_metrics=eval_metrics,
+        pending_quarantined_count=pending_quarantined_count,
+        current_model_key=predictor.model_type,
+        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type)
+    )
+
+
+@app.route("/admin/history")
+@admin_required
+def admin_history():
+    """5. Moderation History: Archived review decisions (Approved, Rejected, Flagged)."""
+    filter_val = request.args.get("filter", "all").strip().lower()
+    history_posts = MongoDBManager.get_moderation_history(limit=100, status_filter=filter_val)
+    pending_quarantined_count = len(MongoDBManager.get_quarantined_posts())
+
+    return render_template(
+        "admin/history.html",
+        active_tab="history",
+        history_posts=history_posts,
+        current_filter=filter_val,
+        pending_quarantined_count=pending_quarantined_count,
+        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type)
+    )
+
+
+@app.route("/admin/activity")
+@admin_required
+def admin_activity():
+    """6. Administrative Activity Logs: Full audit trail of moderation operations."""
+    action_filter = request.args.get("action", "all").strip()
+    logs = MongoDBManager.get_activity_logs(limit=100, action_filter=action_filter)
+    pending_quarantined_count = len(MongoDBManager.get_quarantined_posts())
+
+    return render_template(
+        "admin/activity.html",
+        active_tab="activity",
+        logs=logs,
+        current_action=action_filter,
+        pending_quarantined_count=pending_quarantined_count,
+        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type)
+    )
+
+
+@app.route("/admin/settings")
+@admin_required
+def admin_settings():
+    """7. System Settings: Model architecture selection, sensitivity threshold, diagnostics."""
+    pending_quarantined_count = len(MongoDBManager.get_quarantined_posts())
+
+    return render_template(
+        "admin/settings.html",
+        active_tab="settings",
+        current_model_key=predictor.model_type,
+        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type),
+        pending_quarantined_count=pending_quarantined_count
+    )
+
+
+@app.route("/admin/settings/update", methods=["POST"])
+@admin_required
+def admin_update_settings():
+    """Switches active model architecture dynamically."""
+    global predictor
+    requested_model = request.form.get("model_type", "").strip().lower()
+    admin_name = session.get("username", "admin")
+
+    if requested_model in SUPPORTED_MODELS:
+        try:
+            predictor = CyberbullyingPredictor(model_type=requested_model)
+            app.config["MODEL_TYPE"] = requested_model
+            MongoDBManager.log_activity(
+                admin_username=admin_name,
+                action="change_setting",
+                target_type="system",
+                target_id="active_model",
+                details=f"Switched active AI engine to {SUPPORTED_MODELS[requested_model]}"
+            )
+            flash(f"Active AI engine successfully switched to {SUPPORTED_MODELS[requested_model]}.", "success")
+        except Exception as e:
+            logger.error(f"Failed to switch model to '{requested_model}': {e}")
+            flash(f"Failed to switch model to {requested_model}: {e}", "danger")
+    else:
+        flash("Unsupported model selection.", "warning")
+
+    return redirect(url_for("admin_settings"))
+
+
+@app.route("/admin/post/<post_id>/approve", methods=["POST"])
+@admin_required
+def admin_approve_post(post_id):
+    """Admin overrides AI and allows post onto the public timeline."""
+    admin_name = session.get("username", "admin")
+    success = MongoDBManager.approve_post(post_id, admin_name=admin_name)
+    if success:
+        flash("Post approved and released to the public timeline.", "success")
+    else:
+        flash("Failed to approve post.", "danger")
+    
+    # Return to referring page (Queue, Dashboard, or History)
+    ref = request.referrer
+    if ref and "/admin" in ref:
+        return redirect(ref)
+    return redirect(url_for("admin_queue"))
+
+
+@app.route("/admin/post/<post_id>/reject", methods=["POST"])
+@admin_required
+def admin_reject_post(post_id):
+    """Admin confirms toxicity and permanently rejects post."""
+    admin_name = session.get("username", "admin")
+    reason = request.form.get("reason", "Hate speech / harassment policy violation")
+    success = MongoDBManager.reject_post(post_id, admin_name=admin_name, reason=reason)
+    if success:
+        flash("Post permanently rejected and author notified.", "warning")
+    else:
+        flash("Failed to reject post.", "danger")
+    
+    ref = request.referrer
+    if ref and "/admin" in ref:
+        return redirect(ref)
+    return redirect(url_for("admin_queue"))
+
+
+@app.route("/admin/user/<user_id>/block", methods=["POST"])
+@admin_required
+def admin_block_user(user_id):
+    """Admin blocks an offending user from posting."""
+    admin_name = session.get("username", "admin")
+    reason = request.form.get("reason", "Repeated cyberbullying / hate speech violations")
+    try:
+        success = MongoDBManager.block_user(user_id, reason=reason, admin_username=admin_name)
+        if success:
+            flash("User account has been suspended from posting.", "danger")
+        else:
+            flash("Failed to block user.", "warning")
+    except ValueError as ve:
+        flash(str(ve), "warning")
+    except Exception as e:
+        logger.error(f"Error blocking user {user_id}: {e}")
+        flash("An error occurred while blocking user.", "danger")
+
+    ref = request.referrer
+    if ref and "/admin" in ref:
+        return redirect(ref)
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/user/<user_id>/unblock", methods=["POST"])
+@admin_required
+def admin_unblock_user(user_id):
+    """Admin unblocks a user."""
+    admin_name = session.get("username", "admin")
+    success = MongoDBManager.unblock_user(user_id, admin_username=admin_name)
+    if success:
+        flash("User account access restored.", "success")
+    else:
+        flash("Failed to unblock user.", "warning")
+
+    ref = request.referrer
+    if ref and "/admin" in ref:
+        return redirect(ref)
+    return redirect(url_for("admin_users"))
+
+
+# ------------------------------------------------------------------------------
+# Core Analyzer Routes
 # ------------------------------------------------------------------------------
 @app.route("/", methods=["GET"])
 def index():
@@ -228,6 +774,18 @@ def analyze():
         conn.commit()
         record_id = cursor.lastrowid
         conn.close()
+
+        # Store prediction in MongoDB
+        try:
+            MongoDBManager.save_prediction(
+                text_snippet=text_snippet,
+                prediction=prediction_label,
+                confidence=confidence_pct,
+                model_type=model_name_used,
+                user_id=session.get("user_id")
+            )
+        except Exception as me:
+            logger.warning(f"Notice: Failed to log prediction to MongoDB: {me}")
 
         # Step C: Information Extraction (CO2)
         extracted_info = info_extractor.extract_information(raw_text, is_bullying, confidence_pct)
@@ -346,6 +904,18 @@ def analyze_screenshot():
         conn.commit()
         record_id = cursor.lastrowid
         conn.close()
+
+        # Store prediction in MongoDB
+        try:
+            MongoDBManager.save_prediction(
+                text_snippet=text_snippet,
+                prediction=prediction_label,
+                confidence=confidence_pct,
+                model_type=model_name_used,
+                user_id=session.get("user_id")
+            )
+        except Exception as me:
+            logger.warning(f"Notice: Failed to log prediction to MongoDB: {me}")
 
         # 4. Feature Attribution & GenAI
         extracted_info = info_extractor.extract_information(extracted_text, is_bullying, confidence_pct)
@@ -467,6 +1037,12 @@ def clear_history():
         conn.commit()
         conn.close()
 
+        # Clear MongoDB predictions history
+        try:
+            MongoDBManager.clear_prediction_history()
+        except Exception as me:
+            logger.warning(f"Notice: Failed to clear MongoDB prediction history: {me}")
+
         flash("Prediction history has been permanently cleared.", "info")
     except Exception as err:
         logger.error(f"Error clearing history: {err}", exc_info=True)
@@ -507,13 +1083,13 @@ def dashboard():
         avg_row = cursor.fetchone()
         avg_confidence = round(float(avg_row["avg_conf"]), 1) if avg_row and avg_row["avg_conf"] is not None else 0.0
 
-        # Recent predictions (last 10 records for quick view)
+        # Prediction history records (integrated directly into Dashboard)
         cursor.execute(
             """
             SELECT id, text_snippet, prediction, confidence, model_type, timestamp
             FROM predictions
             ORDER BY id DESC
-            LIMIT 10
+            LIMIT 100
             """
         )
         recent_records = cursor.fetchall()

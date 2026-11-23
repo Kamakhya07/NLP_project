@@ -1,0 +1,225 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Moderation Queue | CyberShield Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Content Moderation Queue</h3>
+        <p class="text-secondary small mb-0">Review intercepted comments, inspect LIME attribution evidence, and enforce community standards.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold">
+            <i class="fa-solid fa-clock me-1"></i> {{ quarantined_posts|length }} Item(s) Pending Action
+        </span>
+    </div>
+</div>
+
+<!-- Moderation Queue Stream -->
+<div class="row">
+    <div class="col-12">
+        {% if quarantined_posts %}
+            {% for post in quarantined_posts %}
+            <div class="saas-card p-4 mb-4" id="post-card-{{ post._id }}" style="border-left: 5px solid var(--danger-color);">
+                <!-- Card Header: User Info & AI Verdict -->
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="admin-avatar" style="background-color: var(--coffee-warm); width: 42px; height: 42px; font-size: 1rem; background-image: none !important;">
+                            {{ post.display_name[0]|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark fs-6">{{ post.display_name }}</div>
+                            <div class="text-muted fs-xs">
+                                <span>@{{ post.username }}</span>
+                                <span class="mx-1">&bull;</span>
+                                <span>Submitted: {{ post.created_at.strftime('%b %d, %Y at %H:%M') if post.created_at else 'Recent' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-danger text-light rounded-pill px-3 py-2 fw-semibold">
+                            <i class="fa-solid fa-shield-virus me-1"></i> Cyberbullying ({{ ((post.moderation.confidence or 0.9)|float * 100)|round(1) }}%)
+                        </span>
+                        <span class="badge {% if post.moderation.risk_score == 'High' %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-warning-subtle text-warning border border-warning-subtle{% endif %} rounded-pill px-3 py-2 fw-semibold">
+                            Risk: {{ post.moderation.risk_score or 'High' }}
+                        </span>
+                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 fw-semibold">
+                            Status: Quarantined
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Flagged Comment Text -->
+                <div class="p-3 rounded-3 mb-3 border font-monospace" style="background-color: #f8fafc; border-color: #e2e8f0; font-size: 0.95rem; color: #1e293b;">
+                    {{ post.content }}
+                </div>
+
+                <!-- Collapsible "View AI Evidence" Accordion -->
+                <div class="mb-4">
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2 fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#aiEvidence-{{ post._id }}" aria-expanded="false" aria-controls="aiEvidence-{{ post._id }}">
+                        <i class="fa-solid fa-brain text-primary"></i>
+                        <span>View AI Evidence & Analysis</span>
+                        <i class="fa-solid fa-chevron-down fs-xs ms-1"></i>
+                    </button>
+
+                    <div class="collapse mt-3" id="aiEvidence-{{ post._id }}">
+                        <div class="p-4 rounded-3 border" style="background-color: #f1f5f9; border-color: #cbd5e1;">
+                            <div class="row g-4">
+                                <!-- LIME Feature Attribution (Toxic vs Neutral/Supportive) -->
+                                <div class="col-lg-7">
+                                    <h6 class="fw-bold text-dark small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-highlighter text-warning"></i> LIME Feature Attribution (Token Weights)
+                                    </h6>
+                                    <p class="text-muted fs-xs mb-3">Red badges indicate positive cyberbullying triggers; green badges indicate mitigating/contextual tokens.</p>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% if post.moderation and post.moderation.toxic_tokens %}
+                                            {% for t in post.moderation.toxic_tokens %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fs-xs d-flex align-items-center gap-2">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                <strong class="fs-6">"{{ t.token }}"</strong>
+                                                <span class="opacity-75">weight: +{{ t.score|round(3) }}</span>
+                                            </span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-secondary small">Model classified cumulative sentence toxicity without individual high-weight triggers.</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mt-3 pt-3 border-top border-secondary-subtle">
+                                        <span class="text-muted fs-xs">Model Architecture:</span>
+                                        <span class="fw-semibold text-dark fs-xs ms-1">{{ post.moderation.model_used }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Multimodal Screenshot & OCR Evidence (if present) -->
+                                <div class="col-lg-5">
+                                    {% if post.image_path %}
+                                        <h6 class="fw-bold text-dark small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-image text-info"></i> Attached Screenshot & OCR
+                                        </h6>
+                                        <div class="rounded-3 overflow-hidden border mb-2" style="max-height: 180px;">
+                                            <img src="{{ url_for('static', filename=post.image_path) }}" class="w-100" style="object-fit: cover; max-height: 180px;" alt="Post screenshot">
+                                        </div>
+                                        <div class="p-2 rounded-2 bg-white border text-dark fs-xs">
+                                            <strong>OCR Extracted Text:</strong>
+                                            <div class="font-monospace text-secondary mt-1">{{ post.moderation.ocr_text or 'No distinct text parsed' }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="p-4 text-center rounded-3 bg-white border text-muted h-100 d-flex flex-column align-items-center justify-content-center">
+                                            <i class="fa-solid fa-font fs-3 mb-2 text-secondary"></i>
+                                            <span class="small">Text-only submission</span>
+                                            <span class="fs-xs opacity-75">No multimodal image attached</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button Toolbar -->
+                <div class="d-flex align-items-center justify-content-between pt-3 border-top flex-wrap gap-2">
+                    <span class="text-muted small">
+                        Author Strike Count: <strong class="text-danger">{{ post.author_strikes|default(1) }} recorded</strong>
+                    </span>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- 1. Approve (Green) -->
+                        <form action="{{ url_for('admin_approve_post', post_id=post._id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-saas-approve d-flex align-items-center gap-2" onclick="return confirm('Approve and publish this post to the public feed?');">
+                                <i class="fa-solid fa-check"></i>
+                                <span>Approve</span>
+                            </button>
+                        </form>
+
+                        <!-- 2. Reject (Red) with Modal Trigger -->
+                        <button type="button" class="btn btn-saas-reject d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#rejectModal-{{ post._id }}">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Reject</span>
+                        </button>
+
+                        <!-- 3. Block User (Red Outline) with Modal Trigger -->
+                        <button type="button" class="btn btn-saas-block-outline d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#blockModal-{{ post._id }}">
+                            <i class="fa-solid fa-user-slash"></i>
+                            <span>Block User</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reject Confirmation Modal -->
+            <div class="modal fade" id="rejectModal-{{ post._id }}" tabindex="-1" aria-labelledby="rejectModalLabel-{{ post._id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
+                        <form action="{{ url_for('admin_reject_post', post_id=post._id) }}" method="POST">
+                            <div class="modal-header border-bottom p-4">
+                                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="rejectModalLabel-{{ post._id }}">
+                                    <i class="fa-solid fa-trash text-danger"></i> Confirm Post Rejection
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <p class="text-secondary small mb-3">
+                                    Are you sure you want to permanently reject and remove this post? The author <strong>@{{ post.username }}</strong> will be notified of this moderation decision.
+                                </p>
+                                <div class="mb-3">
+                                    <label class="form-label text-dark small fw-semibold">Rejection Reason</label>
+                                    <select name="reason" class="form-select text-dark border-secondary-subtle">
+                                        <option value="Hate Speech & Direct Harassment" selected>Hate Speech & Direct Harassment</option>
+                                        <option value="Abusive Language & Threatening Slurs">Abusive Language & Threatening Slurs</option>
+                                        <option value="Offensive Multimodal Screenshot">Offensive Multimodal Screenshot</option>
+                                        <option value="Targeted Cyberbullying Violation">Targeted Cyberbullying Violation</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-top p-3 bg-light" style="border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">Confirm Rejection</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Block User Confirmation Modal -->
+            <div class="modal fade" id="blockModal-{{ post._id }}" tabindex="-1" aria-labelledby="blockModalLabel-{{ post._id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 14px;">
+                        <form action="{{ url_for('admin_block_user', user_id=post.user_id) }}" method="POST">
+                            <div class="modal-header border-bottom p-4">
+                                <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="blockModalLabel-{{ post._id }}">
+                                    <i class="fa-solid fa-ban"></i> Suspend User Account
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="alert alert-danger p-3 rounded-3 mb-3 small d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-triangle-exclamation fs-5 flex-shrink-0"></i>
+                                    <span>Suspending <strong>@{{ post.username }}</strong> will immediately revoke their posting privileges across the platform.</span>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-dark small fw-semibold">Administrative Ban Reason</label>
+                                    <input type="text" name="reason" class="form-control" value="Repeated cyberbullying and toxic conduct violations" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-top p-3 bg-light" style="border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">Block User Immediately</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="saas-card p-5 text-center">
+                <i class="fa-solid fa-circle-check text-success fs-1 mb-3"></i>
+                <h4 class="fw-bold text-dark">All Clear!</h4>
+                <p class="text-secondary small mb-0">There are currently no quarantined cyberbullying comments awaiting review.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

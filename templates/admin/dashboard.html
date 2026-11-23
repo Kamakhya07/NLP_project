@@ -1,0 +1,289 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Dashboard Overview | CyberShield Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1" style="color: var(--coffee-darkest);">Platform Overview & Moderation Desk</h3>
+        <p class="text-secondary small mb-0">Real-time content moderation metrics, system volume, and enforcement status.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin_queue') }}" class="btn btn-saas-primary d-flex align-items-center gap-2">
+            <i class="fa-solid fa-shield-virus"></i>
+            <span>Review Queue</span>
+            {% if pending_quarantined_count and pending_quarantined_count > 0 %}
+            <span class="badge rounded-pill" style="background-color: var(--danger-color); color: #ffffff;">{{ pending_quarantined_count }}</span>
+            {% endif %}
+        </a>
+    </div>
+</div>
+
+<!-- 4 Core SaaS KPI Cards (Solid Coffee, Olive & Beige Accents) -->
+<div class="row g-4 mb-4">
+    <!-- 1. Total Posts -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card" style="border-top: 4px solid var(--coffee-warm);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="kpi-title" style="color: var(--coffee-muted);">Total Posts</span>
+                <div class="kpi-icon-wrapper" style="background-color: #f0e9dd; color: var(--coffee-dark);">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+            </div>
+            <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.total_posts }}</div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="badge rounded-pill fw-semibold" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+                    <i class="fa-solid fa-circle-check me-1"></i> {{ analytics.published_posts }} Published
+                </span>
+                <span class="small text-muted">on feed</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Flagged Posts -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card" style="border-top: 4px solid var(--danger-color);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="kpi-title text-danger">Flagged Posts</span>
+                <div class="kpi-icon-wrapper" style="background-color: #faeaea; color: var(--danger-color);">
+                    <i class="fa-solid fa-shield-virus"></i>
+                </div>
+            </div>
+            <div class="kpi-val text-danger">{{ analytics.quarantined_posts }}</div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="badge rounded-pill fw-semibold" style="background-color: #faeaea; color: var(--danger-color); border: 1px solid #e8b8b8;">
+                    <i class="fa-solid fa-clock me-1"></i> Awaiting Review
+                </span>
+                <span class="small text-muted">{{ analytics.rejected_posts }} rejected</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Total Users -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card" style="border-top: 4px solid var(--olive-medium);">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="kpi-title" style="color: var(--olive-dark);">Total Users</span>
+                <div class="kpi-icon-wrapper" style="background-color: #eaf0dd; color: var(--olive-dark);">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+            <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.total_users }}</div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="badge rounded-pill fw-semibold" style="background-color: #eaf0dd; color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+                    <i class="fa-solid fa-user-check me-1"></i> {{ analytics.active_users }} Active
+                </span>
+                <span class="small text-muted">registered</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Blocked Users -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card" style="border-top: 4px solid #82634a;">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="kpi-title" style="color: var(--coffee-muted);">Blocked Users</span>
+                <div class="kpi-icon-wrapper" style="background-color: #f5efe6; color: var(--coffee-muted);">
+                    <i class="fa-solid fa-user-slash"></i>
+                </div>
+            </div>
+            <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.blocked_users }}</div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="badge rounded-pill fw-semibold" style="background-color: #f0e9dd; color: var(--coffee-warm); border: 1px solid #ded5c5;">
+                    <i class="fa-solid fa-ban me-1"></i> Suspended
+                </span>
+                <span class="small text-muted">violations</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Left Column: Pending Moderation Spotlight -->
+    <div class="col-lg-7">
+        <div class="saas-card p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: var(--card-border) !important;">
+                <div>
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
+                        <i class="fa-solid fa-inbox text-warning"></i> Pending Queue Preview
+                    </h5>
+                    <span class="text-secondary small">Latest items intercepted by AI filter</span>
+                </div>
+                <a href="{{ url_for('admin_queue') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="color: var(--coffee-warm); border-color: var(--beige-border);">
+                    View Queue ({{ pending_quarantined_count }}) &rarr;
+                </a>
+            </div>
+
+            {% if pending_posts_preview %}
+                <div class="d-flex flex-column gap-3">
+                    {% for p in pending_posts_preview %}
+                    <div class="p-3 rounded-3 border" style="background-color: #fdfbf7; border-color: var(--card-border) !important;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold small" style="color: var(--coffee-darkest);">{{ p.display_name }}</span>
+                                <span class="text-muted fs-xs">@{{ p.username }}</span>
+                            </div>
+                            <span class="badge rounded-pill fs-xs" style="background-color: var(--danger-color); color: #ffffff;">
+                                Cyberbullying ({{ ((p.moderation.confidence or 0.9)|float * 100)|round(1) }}%)
+                            </span>
+                        </div>
+                        <p class="small mb-2 text-truncate font-monospace" style="background: white; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--card-border); color: var(--coffee-darkest);">
+                            {{ p.content }}
+                        </p>
+                        <div class="d-flex align-items-center justify-content-between text-muted fs-xs">
+                            <span><i class="fa-solid fa-clock me-1"></i> {{ p.created_at.strftime('%b %d, %H:%M') if p.created_at else 'Recent' }}</span>
+                            <a href="{{ url_for('admin_queue') }}" class="fw-semibold text-decoration-none" style="color: var(--olive-dark);">Inspect in Queue &rarr;</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-5 text-center text-muted">
+                    <i class="fa-solid fa-circle-check fs-1 mb-3" style="color: var(--olive-medium);"></i>
+                    <h6 class="fw-bold" style="color: var(--coffee-darkest);">Queue is Clear!</h6>
+                    <p class="small text-muted mb-0">No intercepted cyberbullying comments currently require review.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Recent Activity Logs -->
+    <div class="col-lg-5">
+        <div class="saas-card p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: var(--card-border) !important;">
+                <div>
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
+                        <i class="fa-solid fa-list-check" style="color: var(--olive-medium);"></i> Recent Activity Logs
+                    </h5>
+                    <span class="text-secondary small">Latest moderation events</span>
+                </div>
+                <a href="{{ url_for('admin_activity') }}" class="small text-decoration-none fw-semibold" style="color: var(--coffee-warm);">View All</a>
+            </div>
+
+            {% if recent_activities %}
+                <div class="d-flex flex-column gap-3">
+                    {% for act in recent_activities %}
+                    <div class="d-flex align-items-start gap-3 p-2 rounded-2" style="background-color: #faf7f2;">
+                        <div class="p-2 rounded-circle flex-shrink-0" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+                            {% if act.action == 'approve_post' %}background-color: var(--olive-tint); color: var(--olive-dark);
+                            {% elif act.action == 'reject_post' %}background-color: #faeaea; color: var(--danger-color);
+                            {% elif act.action == 'block_user' %}background-color: #faeaea; color: var(--danger-color);
+                            {% elif act.action == 'unblock_user' %}background-color: #eaf0dd; color: var(--olive-dark);
+                            {% else %}background-color: #f0e9dd; color: var(--coffee-warm);{% endif %}">
+                            {% if act.action == 'approve_post' %}<i class="fa-solid fa-check fs-xs"></i>
+                            {% elif act.action == 'reject_post' %}<i class="fa-solid fa-trash fs-xs"></i>
+                            {% elif act.action == 'block_user' %}<i class="fa-solid fa-user-slash fs-xs"></i>
+                            {% elif act.action == 'unblock_user' %}<i class="fa-solid fa-user-check fs-xs"></i>
+                            {% else %}<i class="fa-solid fa-info fs-xs"></i>{% endif %}
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold small" style="color: var(--coffee-darkest);">@{{ act.admin_username }}</span>
+                                <span class="text-muted fs-xs">{{ act.timestamp.strftime('%H:%M, %b %d') if act.timestamp else 'Just now' }}</span>
+                            </div>
+                            <div class="text-secondary fs-xs text-truncate">{{ act.details }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="fa-solid fa-clipboard-list fs-2 mb-2" style="color: var(--beige-muted);"></i>
+                    <p class="small mb-0">No recent activity logged yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Moderation History & Archive Section (Integrated directly into Dashboard Tab) -->
+<div class="row">
+    <div class="col-12">
+        <div class="saas-card p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom flex-wrap gap-2" style="border-color: var(--card-border) !important;">
+                <div>
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
+                        <i class="fa-solid fa-clock-rotate-left" style="color: var(--olive-medium);"></i> Moderation History Archive
+                    </h5>
+                    <span class="text-secondary small">Comprehensive log of reviewed, approved, and rejected submissions</span>
+                </div>
+                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background-color: #f0e9dd; color: var(--coffee-dark); border: 1px solid var(--card-border);">
+                    {{ history_posts|length }} Archived Records
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead style="background-color: #f5efe6; color: var(--coffee-muted); font-size: 0.75rem; text-transform: uppercase;">
+                        <tr>
+                            <th class="ps-3 py-3">Author</th>
+                            <th class="py-3" style="width: 40%;">Comment Content</th>
+                            <th class="py-3">AI Verdict</th>
+                            <th class="py-3">Moderation Status</th>
+                            <th class="py-3">Reviewer</th>
+                            <th class="text-end pe-3 py-3">Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if history_posts %}
+                            {% for p in history_posts %}
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="fw-semibold small" style="color: var(--coffee-darkest);">{{ p.display_name }}</div>
+                                    <div class="text-muted fs-xs">@{{ p.username }}</div>
+                                </td>
+                                <td>
+                                    <div class="small text-truncate font-monospace" style="max-width: 380px; color: var(--coffee-darkest);">
+                                        {{ p.content }}
+                                    </div>
+                                    {% if p.moderation and p.moderation.rejection_reason %}
+                                    <div class="fs-xs mt-1 text-danger">
+                                        <i class="fa-solid fa-circle-exclamation me-1"></i> Reason: {{ p.moderation.rejection_reason }}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill px-2 py-1 fs-xs" style="
+                                        {% if p.moderation.prediction == 'Cyberbullying' %}background-color: #faeaea; color: var(--danger-color); border: 1px solid #e8b8b8;
+                                        {% else %}background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);{% endif %}">
+                                        {{ p.moderation.prediction }} ({{ ((p.moderation.confidence or 0.9)|float * 100)|round(1) }}%)
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if p.status == 'published' %}
+                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold" style="background-color: var(--olive-medium); color: #ffffff;">
+                                            <i class="fa-solid fa-check me-1"></i> Approved
+                                        </span>
+                                    {% elif p.status == 'rejected' %}
+                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold" style="background-color: var(--danger-color); color: #ffffff;">
+                                            <i class="fa-solid fa-ban me-1"></i> Rejected
+                                        </span>
+                                    {% else %}
+                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold" style="background-color: #f0e9dd; color: var(--coffee-warm); border: 1px solid var(--card-border);">
+                                            <i class="fa-solid fa-clock me-1"></i> Quarantined
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="small" style="color: var(--coffee-muted);">
+                                    {{ p.moderation.reviewed_by|default('AI Auto-Filter') }}
+                                </td>
+                                <td class="text-end pe-3 text-muted fs-xs">
+                                    {{ p.moderation.reviewed_at.strftime('%b %d, %H:%M') if p.moderation.reviewed_at else (p.created_at.strftime('%b %d, %H:%M') if p.created_at else 'Recent') }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-clock-rotate-left fs-2 mb-2" style="color: var(--beige-muted);"></i>
+                                    <div>No moderation history entries recorded yet.</div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

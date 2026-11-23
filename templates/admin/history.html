@@ -1,0 +1,110 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Moderation History | CyberShield Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Moderation History & Archive</h3>
+        <p class="text-secondary small mb-0">Audit past administrative decisions: Approved, Rejected, and Quarantined posts.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-3 py-2 fw-semibold">
+            <i class="fa-solid fa-clock-rotate-left me-1"></i> {{ history_posts|length }} Records Logged
+        </span>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="saas-card p-3 mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('admin_history', filter='all') }}" class="btn btn-sm {% if current_filter == 'all' or not current_filter %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill px-3 me-2">
+                All Records ({{ history_posts|length }})
+            </a>
+            <a href="{{ url_for('admin_history', filter='published') }}" class="btn btn-sm {% if current_filter == 'published' %}btn-success{% else %}btn-outline-secondary{% endif %} rounded-pill px-3 me-2">
+                <i class="fa-solid fa-check me-1"></i> Approved
+            </a>
+            <a href="{{ url_for('admin_history', filter='rejected') }}" class="btn btn-sm {% if current_filter == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %} rounded-pill px-3 me-2">
+                <i class="fa-solid fa-trash me-1"></i> Rejected
+            </a>
+            <a href="{{ url_for('admin_history', filter='quarantined') }}" class="btn btn-sm {% if current_filter == 'quarantined' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">
+                <i class="fa-solid fa-clock me-1"></i> Pending
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- History Table -->
+<div class="saas-card overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-secondary fs-xs text-uppercase">
+                <tr>
+                    <th class="ps-4 py-3">Author</th>
+                    <th class="py-3" style="width: 40%;">Comment Content</th>
+                    <th class="py-3">AI Verdict</th>
+                    <th class="py-3">Final Decision</th>
+                    <th class="py-3">Moderator</th>
+                    <th class="text-end pe-4 py-3">Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if history_posts %}
+                    {% for p in history_posts %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-semibold text-dark small">{{ p.display_name }}</div>
+                            <div class="text-muted fs-xs">@{{ p.username }}</div>
+                        </td>
+                        <td>
+                            <div class="text-dark small text-truncate font-monospace" style="max-width: 380px;">
+                                {{ p.content }}
+                            </div>
+                            {% if p.moderation and p.moderation.rejection_reason %}
+                            <div class="text-danger fs-xs mt-1">
+                                <i class="fa-solid fa-circle-exclamation me-1"></i> Reason: {{ p.moderation.rejection_reason }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {% if p.moderation.prediction == 'Cyberbullying' %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-success-subtle text-success border border-success-subtle{% endif %} rounded-pill px-2 py-1 fs-xs">
+                                {{ p.moderation.prediction }} ({{ ((p.moderation.confidence or 0.9)|float * 100)|round(1) }}%)
+                            </span>
+                        </td>
+                        <td>
+                            {% if p.status == 'published' %}
+                                <span class="badge bg-success text-light rounded-pill px-3 py-1 fs-xs fw-semibold">
+                                    <i class="fa-solid fa-check me-1"></i> Approved
+                                </span>
+                            {% elif p.status == 'rejected' %}
+                                <span class="badge bg-danger text-light rounded-pill px-3 py-1 fs-xs fw-semibold">
+                                    <i class="fa-solid fa-ban me-1"></i> Rejected
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 fs-xs fw-semibold">
+                                    <i class="fa-solid fa-clock me-1"></i> Quarantined
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-secondary small">
+                            {{ p.moderation.reviewed_by|default('AI System') }}
+                        </td>
+                        <td class="text-end pe-4 text-muted fs-xs">
+                            {{ p.moderation.reviewed_at.strftime('%b %d, %H:%M') if p.moderation.reviewed_at else (p.created_at.strftime('%b %d, %H:%M') if p.created_at else 'Recent') }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-clock-rotate-left fs-2 mb-2 text-secondary"></i>
+                            <div>No moderation history entries match this filter.</div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

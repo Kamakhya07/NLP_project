@@ -125,7 +125,7 @@
                         <!-- Progress Bar -->
                         <div class="progress confidence-progress mb-3" style="height: 18px;" role="progressbar" aria-valuenow="{{ confidence }}" aria-valuemin="0" aria-valuemax="100">
                             <div 
-                                class="progress-bar progress-bar-striped progress-bar-animated {% if is_bullying %}bg-danger-gradient{% else %}bg-success-gradient{% endif %}" 
+                                class="progress-bar progress-bar-striped progress-bar-animated {% if is_bullying %}bg-danger{% else %}bg-success{% endif %}" 
                                 style="width: {{ confidence }}%;"
                             ></div>
                         </div>
@@ -254,14 +254,14 @@
 
                     <!-- Action Buttons -->
                     <div class="d-flex flex-wrap gap-2 justify-content-center pt-2">
-                        <a href="{{ url_for('index') }}" class="btn btn-primary-gradient px-4 py-2 fw-bold rounded-pill">
+                        <a href="{{ url_for('index') }}" class="btn btn-primary px-4 py-2 fw-bold rounded-pill">
                             <i class="fa-solid fa-magnifying-glass-plus me-2"></i> Analyze Another Comment
                         </a>
-                        <a href="{{ url_for('history') }}" class="btn btn-outline-light px-4 py-2 fw-semibold rounded-pill">
-                            <i class="fa-solid fa-list-check me-2"></i> View History Log
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light px-4 py-2 fw-semibold rounded-pill">
+                            <i class="fa-solid fa-clock-rotate-left me-2"></i> View History in Dashboard
                         </a>
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary px-3 py-2 fw-semibold rounded-pill">
-                            <i class="fa-solid fa-chart-column me-2"></i> Dashboard
+                        <a href="{{ url_for('feed') }}" class="btn btn-outline-secondary px-3 py-2 fw-semibold rounded-pill">
+                            <i class="fa-solid fa-comments me-2"></i> Community Feed
                         </a>
                     </div>
 

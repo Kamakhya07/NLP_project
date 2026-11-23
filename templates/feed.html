@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Feed | CyberShield Social{% endblock %}
+
+{% block extra_css %}
+<style>
+.social-container {
+    max-width: 1100px;
+}
+.sidebar-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    color: var(--coffee-warm);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+.sidebar-nav-link:hover {
+    background-color: var(--beige-subtle);
+    color: var(--coffee-darkest);
+}
+.sidebar-nav-link.active {
+    background-color: var(--olive-medium);
+    color: #ffffff !important;
+}
+.tweet-card {
+    background: #ffffff;
+    border: 1px solid var(--beige-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(36, 23, 16, 0.04);
+    transition: border-color 0.2s ease;
+}
+.tweet-card:hover {
+    border-color: var(--coffee-muted);
+}
+.avatar-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+    background-color: var(--coffee-warm);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    background-image: none !important;
+}
+.compose-box {
+    background: #ffffff;
+    border: 1px solid var(--beige-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(36, 23, 16, 0.04);
+}
+.compose-textarea {
+    background: #ffffff;
+    border: 1px solid var(--beige-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--coffee-darkest);
+    font-size: 1.05rem;
+    resize: none;
+    width: 100%;
+}
+.compose-textarea:focus {
+    outline: none;
+    border-color: var(--coffee-warm);
+    box-shadow: 0 0 0 3px rgba(77, 54, 37, 0.1);
+}
+.preview-img-container {
+    position: relative;
+    max-height: 260px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 12px;
+    border: 1px solid var(--beige-border);
+}
+.preview-img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: cover;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container social-container py-3">
+    <div class="row g-4">
+        <!-- Left Sidebar Navigation -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="sticky-top" style="top: 80px;">
+                <div class="d-flex flex-column gap-1 mb-4">
+                    <a href="{{ url_for('feed') }}" class="sidebar-nav-link active">
+                        <i class="fa-solid fa-house fs-5"></i>
+                        <span>Home Feed</span>
+                    </a>
+                    {% if current_user %}
+                    <a href="{{ url_for('notifications') }}" class="sidebar-nav-link position-relative">
+                        <i class="fa-solid fa-bell fs-5"></i>
+                        <span>Notifications</span>
+                        {% if unread_notifs_count > 0 %}
+                        <span class="badge rounded-pill ms-auto" style="background-color: var(--danger-color); color: #ffffff;">{{ unread_notifs_count }}</span>
+                        {% endif %}
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('dashboard') }}" class="sidebar-nav-link">
+                        <i class="fa-solid fa-chart-pie fs-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    {% if current_user and current_user.role == 'admin' %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="sidebar-nav-link fw-bold" style="background-color: var(--coffee-darkest); color: #fdfbf7;">
+                        <i class="fa-solid fa-shield-halved fs-5 text-warning"></i>
+                        <span>Admin Desk</span>
+                        <span class="badge rounded-pill ms-auto" style="background-color: var(--olive-medium); color: #ffffff;">MOD</span>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Current User Profile Card -->
+                {% if current_user %}
+                <div class="card p-3 mb-3" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-circle">
+                            {{ current_user.display_name[0]|upper }}
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="fw-bold text-truncate" style="color: var(--coffee-darkest);">{{ current_user.display_name }}</div>
+                            <div class="small text-truncate" style="color: var(--beige-muted);">@{{ current_user.username }}</div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li>
+                                    <span class="dropdown-item-text text-secondary small">
+                                        Role: <strong class="text-capitalize" style="color: var(--olive-medium);">{{ current_user.role }}</strong>
+                                    </span>
+                                </li>
+                                <li>
+                                    <span class="dropdown-item-text text-secondary small">
+                                        Strikes: <strong class="{% if current_user.strikes_count > 0 %}text-danger{% else %}text-success{% endif %}">{{ current_user.strikes_count }}</strong>
+                                    </span>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {% if current_user.status == 'blocked' %}
+                    <div class="alert alert-danger p-2 mt-3 mb-0 fs-xs d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-ban"></i>
+                        <span>Account blocked by administrator. Posting is disabled.</span>
+                    </div>
+                    {% elif current_user.strikes_count > 0 %}
+                    <div class="alert p-2 mt-3 mb-0 fs-xs d-flex align-items-center gap-2" style="background-color: #faeaea; color: var(--danger-color); border: 1px solid #e8b8b8;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Warning: You have {{ current_user.strikes_count }} flagged attempt(s).</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="card p-3 text-center" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                    <div class="small text-secondary mb-2">Join the conversation</div>
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm rounded-pill w-100 fw-semibold mb-2">Sign In</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-secondary btn-sm rounded-pill w-100">Create Account</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Center Feed & Post Creator -->
+        <div class="col-lg-6 col-12">
+            <!-- Header -->
+            <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: var(--beige-border) !important;">
+                <h4 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
+                    <i class="fa-solid fa-feather-pointed" style="color: var(--coffee-warm);"></i> CyberShield Social Feed
+                </h4>
+                <span class="badge rounded-pill fs-xs px-3 py-1" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+                    <i class="fa-solid fa-shield-halved me-1" style="color: var(--olive-medium);"></i> AI Defense Active
+                </span>
+            </div>
+
+            <!-- Compose Post Box -->
+            {% if current_user %}
+                {% if current_user.status != 'blocked' %}
+                <div class="compose-box">
+                    <form action="{{ url_for('create_post') }}" method="POST" enctype="multipart/form-data" id="composeForm">
+                        <div class="d-flex gap-3">
+                            <div class="avatar-circle">
+                                {{ current_user.display_name[0]|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <textarea name="content" id="postContent" class="compose-textarea" rows="3" placeholder="What's on your mind? AI monitors for hate speech in real time..." maxlength="500" required></textarea>
+                                
+                                <!-- Screenshot image preview -->
+                                <div id="imagePreviewContainer" class="preview-img-container d-none">
+                                    <img id="imagePreview" class="preview-img" alt="Attached screenshot">
+                                    <button type="button" class="btn btn-sm btn-dark position-absolute top-0 end-0 m-2 rounded-circle" onclick="removeImage()">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2" style="border-color: var(--beige-subtle) !important;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <label for="postImage" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2 mb-0" style="cursor: pointer;" title="Attach screenshot or photo">
+                                            <i class="fa-solid fa-image" style="color: var(--olive-medium);"></i>
+                                            <span class="d-none d-sm-inline small">Attach Screenshot</span>
+                                        </label>
+                                        <input type="file" name="image" id="postImage" class="d-none" accept="image/*" onchange="previewSelectedImage(this)">
+                                        <span id="charCount" class="text-secondary small ms-1">500</span>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-saas-primary px-4 rounded-pill fw-semibold shadow-sm d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                        <span>Post</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% else %}
+                <div class="card p-4 mb-4 text-center" style="background-color: #faeaea; border: 1px solid #e8b8b8; border-radius: 12px; color: var(--danger-color);">
+                    <i class="fa-solid fa-ban fs-1 mb-2"></i>
+                    <h5 class="fw-bold mb-1">Your Account is Blocked</h5>
+                    <p class="small mb-0">Due to repeated violations of CyberShield's Anti-Cyberbullying Policy, posting privileges have been suspended by administrators.</p>
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="card p-4 mb-4 text-center shadow-sm" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                <i class="fa-solid fa-shield-heart fs-2 mb-2" style="color: var(--olive-medium);"></i>
+                <h5 class="fw-bold" style="color: var(--coffee-darkest);">Join the Safe Conversation</h5>
+                <p class="small mb-3" style="color: var(--beige-muted);">Sign in to post comments. Every post is verified by our NLP and Windows OCR defense engine.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm px-4 rounded-pill fw-semibold">Sign In</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-secondary btn-sm px-4 rounded-pill">Register</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Posts Stream -->
+            <div class="posts-stream">
+                {% if posts %}
+                    {% for post in posts %}
+                    <div class="tweet-card">
+                        <div class="d-flex gap-3">
+                            <div class="avatar-circle">
+                                {{ post.display_name[0]|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                    <span class="fw-bold" style="color: var(--coffee-darkest);">{{ post.display_name }}</span>
+                                    <span class="small" style="color: var(--beige-muted);">@{{ post.username }}</span>
+                                    <span class="small text-secondary">&bull;</span>
+                                    <span class="small text-secondary">{{ post.created_at.strftime('%b %d, %H:%M') if post.created_at else 'Just now' }}</span>
+                                    <span class="badge rounded-pill fs-xs ms-auto" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+                                        <i class="fa-solid fa-shield-check me-1" style="color: var(--olive-medium);"></i> Verified Safe
+                                    </span>
+                                </div>
+
+                                <div class="mb-2 fs-6" style="white-space: pre-wrap; word-break: break-word; color: var(--coffee-darkest);">{{ post.content }}</div>
+
+                                {% if post.image_path %}
+                                <div class="rounded-3 overflow-hidden border my-2" style="max-height: 350px; border-color: var(--beige-border) !important;">
+                                    <img src="{{ url_for('static', filename=post.image_path) }}" class="w-100" style="object-fit: cover; max-height: 350px;" alt="Post screenshot">
+                                </div>
+                                {% if post.moderation and post.moderation.ocr_text %}
+                                <div class="p-2 rounded-2 border fs-xs mt-1" style="background-color: #faf7f2; border-color: var(--beige-border) !important; color: var(--coffee-warm);">
+                                    <i class="fa-solid fa-file-lines me-1" style="color: var(--olive-medium);"></i>
+                                    <strong>OCR Extracted Text:</strong> {{ post.moderation.ocr_text }}
+                                </div>
+                                {% endif %}
+                                {% endif %}
+
+                                <div class="d-flex align-items-center gap-4 small pt-2 mt-2 border-top" style="border-color: var(--beige-subtle) !important; color: var(--beige-muted);">
+                                    <form action="{{ url_for('like_post', post_id=post._id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-link text-decoration-none p-0 d-flex align-items-center gap-1" style="color: var(--coffee-muted);">
+                                            <i class="fa-regular fa-heart"></i>
+                                            <span>{{ post.likes_count or 0 }}</span>
+                                        </button>
+                                    </form>
+                                    <span class="d-flex align-items-center gap-1">
+                                        <i class="fa-solid fa-microchip" style="color: var(--olive-medium);"></i>
+                                        <span>Confidence: {{ ((post.moderation.confidence or 0.95) * 100)|round(1) }}%</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="card p-5 text-center" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                        <i class="fa-solid fa-comments fs-1 mb-2" style="color: var(--beige-muted);"></i>
+                        <h5 class="fw-bold" style="color: var(--coffee-darkest);">No posts yet</h5>
+                        <p class="small text-muted mb-0">Be the first to publish a clean comment to the timeline!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Sidebar (Community Guidelines & AI Status) -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="sticky-top" style="top: 80px;">
+                <!-- AI Shield Status Card -->
+                <div class="card p-3 mb-3 shadow-sm" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: var(--beige-subtle) !important;">
+                        <div class="fw-bold small d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
+                            <i class="fa-solid fa-shield-halved" style="color: var(--olive-medium);"></i> CyberShield AI Defense
+                        </div>
+                        <span class="badge rounded-pill fs-xs" style="background-color: var(--olive-tint); color: var(--olive-dark);">Live</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between fs-xs mb-1" style="color: var(--beige-muted);">
+                            <span>Interception:</span>
+                            <span class="fw-semibold" style="color: var(--coffee-darkest);">Pre-Publish Filter</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-xs mb-1" style="color: var(--beige-muted);">
+                            <span>Core Engine:</span>
+                            <span style="color: var(--coffee-darkest);">TF-IDF + LR / SVM</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-xs mb-1" style="color: var(--beige-muted);">
+                            <span>Multimodal OCR:</span>
+                            <span style="color: var(--olive-medium); font-weight: 600;">Active (WinOCR)</span>
+                        </div>
+                        <div class="d-flex justify-content-between fs-xs" style="color: var(--beige-muted);">
+                            <span>Explainability:</span>
+                            <span style="color: var(--coffee-warm); font-weight: 600;">LIME Token Weights</span>
+                        </div>
+                    </div>
+
+                    <div class="p-2 rounded-3 fs-xs" style="background-color: #faf7f2; border: 1px solid var(--beige-border); color: var(--coffee-muted);">
+                        <i class="fa-solid fa-circle-info me-1" style="color: var(--olive-medium);"></i>
+                        Any comment classified as cyberbullying is automatically withheld and routed to the <strong>Admin Moderation Desk</strong>.
+                    </div>
+                </div>
+
+                <!-- Safe Community Guidelines -->
+                <div class="card p-3 shadow-sm" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                    <div class="fw-bold small mb-2" style="color: var(--coffee-darkest);">
+                        <i class="fa-solid fa-handshake-angle me-1" style="color: var(--olive-medium);"></i> Community Standards
+                    </div>
+                    <ul class="fs-xs ps-3 mb-0" style="color: var(--beige-muted);">
+                        <li class="mb-1">No harassment or identity-based slurs</li>
+                        <li class="mb-1">No toxic screenshots or cyberbullying memes</li>
+                        <li class="mb-1">3 flagged strikes triggers moderator review</li>
+                        <li>Zero tolerance for threatening language</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewSelectedImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('imagePreview').src = e.target.result;
+            document.getElementById('imagePreviewContainer').classList.remove('d-none');
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeImage() {
+    document.getElementById('postImage').value = '';
+    document.getElementById('imagePreview').src = '';
+    document.getElementById('imagePreviewContainer').classList.add('d-none');
+}
+
+const postContent = document.getElementById('postContent');
+const charCount = document.getElementById('charCount');
+if (postContent && charCount) {
+    postContent.addEventListener('input', () => {
+        const remaining = 500 - postContent.value.length;
+        charCount.textContent = remaining;
+    });
+}
+</script>
+{% endblock %}

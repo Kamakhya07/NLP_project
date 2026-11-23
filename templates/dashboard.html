@@ -20,7 +20,7 @@
             <span class="badge bg-surface-dark border border-secondary-subtle text-secondary small py-2 px-3 rounded-pill">
                 <i class="fa-solid fa-arrows-rotate text-primary me-1"></i> Live Session Stats
             </span>
-            <a href="{{ url_for('index') }}" class="btn btn-primary-gradient btn-sm rounded-pill px-3">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-sm rounded-pill px-3">
                 <i class="fa-solid fa-magnifying-glass me-1"></i> New Prediction
             </a>
         </div>
@@ -173,16 +173,21 @@
         </div>
     </div>
 
-    <!-- Recent Predictions Table Preview -->
+    <!-- Prediction History Table (Integrated Directly into Dashboard) -->
     {% if recent_records and recent_records|length > 0 %}
-    <div class="card history-card shadow-lg border-0 mb-4 overflow-hidden">
-        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold text-light mb-0">
-                <i class="fa-solid fa-clock me-2 text-primary"></i> Recent Predictions Activity
-            </h5>
-            <a href="{{ url_for('history') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                View All <i class="fa-solid fa-arrow-right ms-1"></i>
-            </a>
+    <div class="card shadow-sm mb-4 overflow-hidden" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+        <div class="card-header border-bottom pt-4 px-4 pb-3 d-flex justify-content-between align-items-center" style="background-color: var(--beige-card); border-color: var(--beige-border) !important;">
+            <div>
+                <h5 class="fw-bold mb-0" style="color: var(--coffee-darkest);">
+                    <i class="fa-solid fa-clock-rotate-left me-2" style="color: var(--olive-medium);"></i> Prediction History & Activity Log
+                </h5>
+                <span class="small" style="color: var(--beige-muted);">All historical evaluations processed by this application</span>
+            </div>
+            <form action="{{ url_for('clear_history') }}" method="POST" onsubmit="return confirm('Clear all recorded prediction history?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                    <i class="fa-solid fa-trash me-1"></i> Clear History
+                </button>
+            </form>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">

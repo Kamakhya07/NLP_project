@@ -59,6 +59,7 @@
   2. *External Out-of-Distribution (OOD) Validation:* Tested models on an external, completely unseen benchmark of **35,640 tweets** (Waseem & Hovy 2016 + Davidson et al. 2017) at [reports/ood_benchmark_report.md](file:///D:/TY/NLP-project/reports/ood_benchmark_report.md), achieving **74.21% OOD accuracy and 0.8082 ROC-AUC** without domain retraining.
   3. *Token-Level Explainable AI (LIME-Style Local Attribution):* Implemented analytical linear feature attribution and occlusion sensitivity ([src/explainability.py](file:///D:/TY/NLP-project/src/explainability.py)) displaying word-by-word percentage contribution heatmaps directly in the web UI.
   4. *Adversarial Robustness & Perturbation Testing:* Benchmarked model resilience against leetspeak (`b!tch`, `id10t`), elongated typos, and negation inversions ([reports/adversarial_robustness_report.md](file:///D:/TY/NLP-project/reports/adversarial_robustness_report.md)), proving 100% invariance on benign conversational expressions.
+  5. *Twitter-like Social Platform with AI Interception & MongoDB Storage:* Designed an end-to-end social media timeline (`http://127.0.0.1:5000/feed`) powered by local MongoDB (`mongodb://localhost:27017/cybershield_db`). When users try to post hate speech or toxic screenshot memes, the AI interceptor withholds the post from the public timeline into a quarantined moderation queue (`http://127.0.0.1:5000/admin`), sends a detailed warning notification to the user, and empowers administrators to review token-level attributions and block offending users.
 
 ---
 

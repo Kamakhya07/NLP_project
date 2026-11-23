@@ -1,0 +1,116 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}System Settings | CyberShield Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">System & AI Settings</h3>
+        <p class="text-secondary small mb-0">Configure active NLP model architecture, pre-publish interception sensitivity, and infrastructure parameters.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- AI Architecture Switcher -->
+    <div class="col-lg-7">
+        <div class="saas-card p-4 mb-4">
+            <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-microchip text-primary"></i> Active Model Architecture
+            </h5>
+            <p class="text-secondary small mb-3">Select the active machine learning or deep transformer model used for social media post interception.</p>
+
+            <form action="{{ url_for('admin_update_settings') }}" method="POST">
+                <div class="d-flex flex-column gap-3 mb-4">
+                    <!-- Logistic Regression -->
+                    <label class="p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer {% if current_model_key == 'logistic_regression' %}border-dark bg-light{% else %}border-secondary-subtle bg-white{% endif %}" style="cursor: pointer;">
+                        <input type="radio" name="model_type" value="logistic_regression" class="mt-1" {% if current_model_key == 'logistic_regression' %}checked{% endif %}>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark small">TF-IDF + Logistic Regression (Recommended Baseline)</div>
+                            <div class="text-secondary fs-xs">Fast inference (~4ms), high interpretability, 74.37% benchmark accuracy on TweetEval.</div>
+                        </div>
+                        <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: var(--coffee-warm); color: #ffffff;">Ultra Fast</span>
+                    </label>
+
+                    <!-- Linear SVM -->
+                    <label class="p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer {% if current_model_key == 'svm' %}border-dark bg-light{% else %}border-secondary-subtle bg-white{% endif %}" style="cursor: pointer;">
+                        <input type="radio" name="model_type" value="svm" class="mt-1" {% if current_model_key == 'svm' %}checked{% endif %}>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark small">TF-IDF + Linear SVM (Platt Calibrated)</div>
+                            <div class="text-secondary fs-xs">Max-margin hyperplane classifier wrapped with sigmoid calibration, 73.13% accuracy.</div>
+                        </div>
+                        <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: var(--olive-medium); color: #ffffff;">Calibrated</span>
+                    </label>
+
+                    <!-- DistilBERT -->
+                    <label class="p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer {% if current_model_key == 'distilbert' %}border-dark bg-light{% else %}border-secondary-subtle bg-white{% endif %}" style="cursor: pointer;">
+                        <input type="radio" name="model_type" value="distilbert" class="mt-1" {% if current_model_key == 'distilbert' %}checked{% endif %}>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark small">Fine-Tuned DistilBERT Transformer</div>
+                            <div class="text-secondary fs-xs">6-layer bidirectional Transformer encoder with contextual self-attention, 76.80% accuracy.</div>
+                        </div>
+                        <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: #b47a1e; color: #ffffff;">Deep Context</span>
+                    </label>
+                </div>
+
+                <!-- Interception Threshold Slider -->
+                <div class="mb-4 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label text-dark small fw-bold mb-0">Hate Interception Threshold</label>
+                        <span class="badge fs-xs" id="thresholdValue" style="background-color: var(--coffee-warm); color: #ffffff;">50%</span>
+                    </div>
+                    <p class="text-secondary fs-xs mb-2">Any post with a cyberbullying probability above this threshold is quarantined.</p>
+                    <input type="range" class="form-range" min="40" max="90" step="5" value="50" id="thresholdRange" oninput="document.getElementById('thresholdValue').innerText = this.value + '%'">
+                </div>
+
+                <button type="submit" class="btn btn-saas-primary fw-semibold px-4">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Save Configuration
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Infrastructure Diagnostics -->
+    <div class="col-lg-5">
+        <div class="saas-card p-4 mb-4">
+            <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-server text-info"></i> Infrastructure & Diagnostics
+            </h5>
+
+            <div class="d-flex flex-column gap-3">
+                <!-- MongoDB Status -->
+                <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-bold text-dark small">MongoDB Local Storage</div>
+                        <div class="text-muted fs-xs">mongodb://localhost:27017/cybershield_db</div>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                        <i class="fa-solid fa-circle-check me-1"></i> Connected
+                    </span>
+                </div>
+
+                <!-- OCR Engine Status -->
+                <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-bold text-dark small">Windows Native OCR (WinOCR)</div>
+                        <div class="text-muted fs-xs">Multimodal Screenshot Text Extraction</div>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                        <i class="fa-solid fa-circle-check me-1"></i> Ready
+                    </span>
+                </div>
+
+                <!-- LIME Engine Status -->
+                <div class="p-3 rounded-3 bg-light border d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-bold text-dark small">LIME Token Feature Attribution</div>
+                        <div class="text-muted fs-xs">Linear & Occlusion Sensitivity Engine</div>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                        <i class="fa-solid fa-circle-check me-1"></i> Active
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
