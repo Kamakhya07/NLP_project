@@ -24,11 +24,11 @@
                 </div>
                 <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.total_posts }}</div>
             </div>
-            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #f0e9dd !important;">
-                <span class="badge rounded-pill fw-semibold" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mt-3 pt-2 border-top" style="border-color: #f0e9dd !important;">
+                <span class="badge rounded-pill fw-semibold text-nowrap" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle); font-size: 0.73rem;">
                     <i class="fa-solid fa-circle-check me-1"></i> {{ analytics.published_posts }} Published
                 </span>
-                <span class="small text-muted">on timeline</span>
+                <span class="text-muted text-nowrap" style="font-size: 0.75rem;">Timeline</span>
             </div>
         </div>
     </div>
@@ -45,11 +45,11 @@
                 </div>
                 <div class="kpi-val text-danger">{{ analytics.quarantined_posts }}</div>
             </div>
-            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #fce8e8 !important;">
-                <span class="badge rounded-pill fw-semibold" style="background-color: #faeaea; color: var(--danger-color); border: 1px solid #e8b8b8;">
-                    <i class="fa-solid fa-clock me-1"></i> Awaiting Review
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mt-3 pt-2 border-top" style="border-color: #fce8e8 !important;">
+                <span class="badge rounded-pill fw-semibold text-nowrap" style="background-color: #faeaea; color: var(--danger-color); border: 1px solid #e8b8b8; font-size: 0.73rem;">
+                    <i class="fa-solid fa-clock me-1"></i> Pending Review
                 </span>
-                <span class="small text-muted">{{ analytics.rejected_posts }} rejected</span>
+                <span class="text-muted text-nowrap" style="font-size: 0.75rem;">{{ analytics.rejected_posts }} rejected</span>
             </div>
         </div>
     </div>
@@ -66,11 +66,11 @@
                 </div>
                 <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.total_users }}</div>
             </div>
-            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #eaf0dd !important;">
-                <span class="badge rounded-pill fw-semibold" style="background-color: #eaf0dd; color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mt-3 pt-2 border-top" style="border-color: #eaf0dd !important;">
+                <span class="badge rounded-pill fw-semibold text-nowrap" style="background-color: #eaf0dd; color: var(--olive-dark); border: 1px solid var(--olive-subtle); font-size: 0.73rem;">
                     <i class="fa-solid fa-user-check me-1"></i> {{ analytics.active_users }} Active
                 </span>
-                <span class="small text-muted">registered</span>
+                <span class="text-muted text-nowrap" style="font-size: 0.75rem;">Registered</span>
             </div>
         </div>
     </div>
@@ -87,11 +87,11 @@
                 </div>
                 <div class="kpi-val" style="color: var(--coffee-darkest);">{{ analytics.blocked_users }}</div>
             </div>
-            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top" style="border-color: #f0e9dd !important;">
-                <span class="badge rounded-pill fw-semibold" style="background-color: #f0e9dd; color: var(--coffee-warm); border: 1px solid #ded5c5;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mt-3 pt-2 border-top" style="border-color: #f0e9dd !important;">
+                <span class="badge rounded-pill fw-semibold text-nowrap" style="background-color: #f0e9dd; color: var(--coffee-warm); border: 1px solid #ded5c5; font-size: 0.73rem;">
                     <i class="fa-solid fa-ban me-1"></i> Suspended
                 </span>
-                <span class="small text-muted">violations</span>
+                <span class="text-muted text-nowrap" style="font-size: 0.75rem;">Violations</span>
             </div>
         </div>
     </div>
@@ -134,12 +134,12 @@
                             <span class="text-muted fs-xs"><i class="fa-solid fa-clock me-1"></i> {{ p.created_at.strftime('%b %d, %H:%M') if p.created_at else 'Recent' }}</span>
                             <div class="d-flex align-items-center gap-2">
                                 <form method="POST" action="{{ url_for('admin_approve_post', post_id=p._id) }}" class="d-inline">
-                                    <button type="submit" class="btn btn-sm py-1 px-3 rounded-pill fw-semibold" style="background-color: var(--olive-medium); color: #ffffff; font-size: 0.75rem; border: none;">
+                                    <button type="submit" class="btn btn-sm py-1 px-3 rounded-pill fw-semibold" style="background-color: #556b2f !important; color: #ffffff !important; font-size: 0.75rem; border: none;">
                                         <i class="fa-solid fa-check me-1"></i> Approve
                                     </button>
                                 </form>
                                 <form method="POST" action="{{ url_for('admin_reject_post', post_id=p._id) }}" class="d-inline" onsubmit="return confirm('Reject this flagged post?');">
-                                    <button type="submit" class="btn btn-sm py-1 px-3 rounded-pill fw-semibold" style="background-color: var(--danger-color); color: #ffffff; font-size: 0.75rem; border: none;">
+                                    <button type="submit" class="btn btn-sm py-1 px-3 rounded-pill fw-semibold" style="background-color: #b83a3a !important; color: #ffffff !important; font-size: 0.75rem; border: none;">
                                         <i class="fa-solid fa-trash me-1"></i> Reject
                                     </button>
                                 </form>
@@ -150,7 +150,7 @@
                 </div>
             {% else %}
                 <div class="p-5 text-center text-muted flex-grow-1 d-flex flex-column justify-content-center">
-                    <i class="fa-solid fa-circle-check fs-1 mb-3" style="color: var(--olive-medium);"></i>
+                    <i class="fa-solid fa-circle-check fs-1 mb-3" style="color: #556b2f;"></i>
                     <h6 class="fw-bold" style="color: var(--coffee-darkest);">Queue is Clear!</h6>
                     <p class="small text-muted mb-0">No intercepted cyberbullying comments currently require review.</p>
                 </div>
@@ -164,15 +164,13 @@
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: var(--card-border) !important;">
                 <div>
                     <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
-                        <i class="fa-solid fa-list-check" style="color: var(--olive-medium);"></i> Recent Activity Logs
+                        <i class="fa-solid fa-list-check" style="color: #556b2f;"></i> Recent Activity Logs
                     </h5>
                     <span class="text-secondary small">Latest moderation events</span>
                 </div>
                 <a href="{{ url_for('admin_activity') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="color: var(--coffee-warm); border-color: var(--beige-border);">
                     View All &rarr;
                 </a>
-            </div>
-                <a href="{{ url_for('admin_activity') }}" class="small text-decoration-none fw-semibold" style="color: var(--coffee-warm);">View All</a>
             </div>
 
             {% if recent_activities %}
@@ -218,71 +216,73 @@
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom flex-wrap gap-2" style="border-color: var(--card-border) !important;">
                 <div>
                     <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
-                        <i class="fa-solid fa-clock-rotate-left" style="color: var(--olive-medium);"></i> Moderation History Archive
+                        <i class="fa-solid fa-clock-rotate-left" style="color: #556b2f;"></i> Moderation History Archive
                     </h5>
                     <span class="text-secondary small">Comprehensive log of reviewed, approved, and rejected submissions</span>
                 </div>
-                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background-color: #f0e9dd; color: var(--coffee-dark); border: 1px solid var(--card-border);">
+                <span class="badge rounded-pill px-3 py-2 fw-semibold text-nowrap" style="background-color: #f0e9dd; color: var(--coffee-dark); border: 1px solid var(--card-border);">
                     {{ history_posts|length }} Archived Records
                 </span>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+            <div class="table-responsive" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                <table class="table table-hover align-middle mb-0" style="min-width: 840px;">
                     <thead style="background-color: #f5efe6; color: var(--coffee-muted); font-size: 0.75rem; text-transform: uppercase;">
                         <tr>
-                            <th class="ps-3 py-3">Author</th>
-                            <th class="py-3" style="width: 40%;">Comment Content</th>
-                            <th class="py-3">AI Verdict</th>
-                            <th class="py-3">Moderation Status</th>
-                            <th class="py-3">Reviewer</th>
-                            <th class="text-end pe-3 py-3">Timestamp</th>
+                            <th class="ps-3 py-3 text-nowrap" style="width: 14%;">Author</th>
+                            <th class="py-3" style="width: 36%;">Comment Content</th>
+                            <th class="py-3 text-nowrap" style="width: 18%;">AI Verdict</th>
+                            <th class="py-3 text-nowrap" style="width: 14%;">Status</th>
+                            <th class="py-3 text-nowrap" style="width: 10%;">Reviewer</th>
+                            <th class="text-end pe-3 py-3 text-nowrap" style="width: 8%;">Timestamp</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if history_posts %}
                             {% for p in history_posts %}
                             <tr>
-                                <td class="ps-3">
+                                <td class="ps-3 text-nowrap">
                                     <div class="fw-semibold small" style="color: var(--coffee-darkest);">{{ p.display_name }}</div>
                                     <div class="text-muted fs-xs">@{{ p.username }}</div>
                                 </td>
                                 <td>
-                                    <div class="small text-truncate font-monospace" style="max-width: 380px; color: var(--coffee-darkest);">
+                                    <div class="small text-truncate font-monospace" style="max-width: 340px; color: var(--coffee-darkest);">
                                         {{ p.content }}
                                     </div>
                                     {% if p.moderation and p.moderation.rejection_reason %}
-                                    <div class="fs-xs mt-1 text-danger">
-                                        <i class="fa-solid fa-circle-exclamation me-1"></i> Reason: {{ p.moderation.rejection_reason }}
+                                    <div class="fs-xs mt-1 text-danger text-truncate" style="max-width: 340px;">
+                                        <i class="fa-solid fa-circle-exclamation me-1"></i> {{ p.moderation.rejection_reason }}
                                     </div>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    <span class="badge rounded-pill px-2 py-1 fs-xs" style="
+                                <td class="text-nowrap">
+                                    <span class="badge rounded-pill px-2 py-1 fs-xs text-nowrap" style="
                                         {% if p.moderation.prediction == 'Cyberbullying' %}background-color: #faeaea; color: var(--danger-color); border: 1px solid #e8b8b8;
                                         {% else %}background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);{% endif %}">
                                         {{ p.moderation.prediction }} ({{ ((p.moderation.confidence or 0.9)|float * 100)|round(1) }}%)
                                     </span>
                                 </td>
-                                <td>
+                                <td class="text-nowrap">
                                     {% if p.status == 'published' %}
-                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold" style="background-color: var(--olive-medium); color: #ffffff;">
+                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold text-nowrap" style="background-color: #556b2f; color: #ffffff;">
                                             <i class="fa-solid fa-check me-1"></i> Approved
                                         </span>
                                     {% elif p.status == 'rejected' %}
-                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold" style="background-color: var(--danger-color); color: #ffffff;">
+                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold text-nowrap" style="background-color: var(--danger-color); color: #ffffff;">
                                             <i class="fa-solid fa-ban me-1"></i> Rejected
                                         </span>
                                     {% else %}
-                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold" style="background-color: #f0e9dd; color: var(--coffee-warm); border: 1px solid var(--card-border);">
+                                        <span class="badge rounded-pill px-3 py-1 fs-xs fw-semibold text-nowrap" style="background-color: #f0e9dd; color: var(--coffee-warm); border: 1px solid var(--card-border);">
                                             <i class="fa-solid fa-clock me-1"></i> Quarantined
                                         </span>
                                     {% endif %}
                                 </td>
-                                <td class="small" style="color: var(--coffee-muted);">
-                                    {{ p.moderation.reviewed_by|default('AI Auto-Filter') }}
+                                <td class="small text-nowrap" style="color: var(--coffee-muted);">
+                                    <span class="badge rounded-pill px-2 py-1 fs-xs" style="background-color: #f0e9dd; color: var(--coffee-dark);">
+                                        {{ p.moderation.reviewed_by|default('AI Auto-Filter') }}
+                                    </span>
                                 </td>
-                                <td class="text-end pe-3 text-muted fs-xs">
+                                <td class="text-end pe-3 text-muted fs-xs text-nowrap">
                                     {{ p.moderation.reviewed_at.strftime('%b %d, %H:%M') if p.moderation.reviewed_at else (p.created_at.strftime('%b %d, %H:%M') if p.created_at else 'Recent') }}
                                 </td>
                             </tr>
