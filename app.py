@@ -247,7 +247,13 @@ def login():
         password = request.form.get("password", "")
         next_url = request.form.get("next") or url_for("feed")
 
-        user = MongoDBManager.authenticate(username, password)
+        try:
+            user = MongoDBManager.authenticate(username, password)
+        except Exception as auth_err:
+            logger.error(f"Error during authentication: {auth_err}")
+            flash(f"Database Connection Error: {str(auth_err)[:150]}. Please check your MongoDB Atlas credentials.", "danger")
+            return render_template("login.html", demo_users=demo_users)
+
         if not user:
             flash("Invalid username or password. Please try again.", "danger")
             return render_template("login.html", demo_users=demo_users)
@@ -276,7 +282,13 @@ def quick_login(username):
     Immediately authenticates and routes to the appropriate view.
     """
     username_clean = username.strip().lower()
-    user = MongoDBManager.get_user_by_username(username_clean)
+    try:
+        user = MongoDBManager.get_user_by_username(username_clean)
+    except Exception as db_err:
+        logger.error(f"Error during quick login: {db_err}")
+        flash(f"Database Connection Error: {str(db_err)[:150]}. Could not reach MongoDB Atlas.", "danger")
+        return redirect(url_for("login"))
+
     if not user:
         flash(f"Demo user '{username}' was not found.", "warning")
         return redirect(url_for("login"))
@@ -1337,8 +1349,8 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     """Custom 500 Internal Server Error page."""
-    logger.error(f"500 Internal Server Error: {e}")
-    return render_template("500.html"), 500
+    logger.error(f"500 Internal Server Error: {e}", exc_info=True)
+    return render_template("500.html", error_message=str(e)), 500
 
 
 @app.errorhandler(400)

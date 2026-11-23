@@ -12,11 +12,16 @@
             <h1 class="display-3 fw-extrabold text-light mb-2">500</h1>
             <h3 class="fw-bold text-light mb-3">Internal Server Error</h3>
             <p class="text-secondary mb-4">
-                An internal server issue occurred while processing your request. Stack traces are masked for production security.
+                An internal server issue occurred while processing your request.
             </p>
+            {% if error_message %}
+            <div class="alert alert-danger text-start font-monospace small p-3 mb-4 mx-auto text-break" style="max-width: 650px;">
+                <strong>Diagnostics:</strong> {{ error_message }}
+            </div>
+            {% endif %}
             <div class="d-flex justify-content-center gap-2">
-                <a href="{{ url_for('index') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold">
-                    <i class="fa-solid fa-rotate-left me-1"></i> Try Again
+                <a href="{{ url_for('login') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Return to Login
                 </a>
                 <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold">
                     <i class="fa-solid fa-chart-pie me-1"></i> Dashboard
