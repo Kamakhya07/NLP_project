@@ -353,6 +353,175 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   User Sidebar Navigation
+   -------------------------------------------------------------------------- */
+.sidebar-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    border-radius: 8px;
+    color: var(--coffee-warm);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+.sidebar-nav-link:hover {
+    background-color: var(--beige-subtle);
+    color: var(--coffee-darkest);
+}
+.sidebar-nav-link.active {
+    background-color: var(--olive-medium);
+    color: #ffffff !important;
+}
+.avatar-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+    background-color: var(--coffee-warm);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    background-image: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Persistent User Portal Sidebar & Layout
+   -------------------------------------------------------------------------- */
+.user-portal-sidebar {
+    width: 250px;
+    background-color: var(--coffee-darkest);
+    border-right: 1px solid var(--coffee-medium);
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease;
+}
+
+.user-sidebar-brand {
+    padding: 20px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(222, 213, 197, 0.12);
+    color: #fdfbf7;
+    text-decoration: none;
+}
+
+.user-sidebar-nav {
+    list-style: none;
+    padding: 16px 12px;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.user-nav-item {
+    margin-bottom: 4px;
+}
+
+.user-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    color: #ded5c5;
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.user-sidebar-link i {
+    font-size: 1.05rem;
+    width: 22px;
+    text-align: center;
+}
+
+.user-sidebar-link:hover {
+    background-color: var(--coffee-medium);
+    color: #ffffff;
+}
+
+.user-sidebar-link.active {
+    background-color: var(--olive-medium);
+    color: #ffffff !important;
+}
+
+.user-sidebar-footer {
+    padding: 14px;
+    border-top: 1px solid rgba(222, 213, 197, 0.12);
+    background-color: #160e08;
+}
+
+.user-profile-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background-color: rgba(222, 213, 197, 0.08);
+}
+
+.user-main-wrapper {
+    margin-left: 250px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.25s ease;
+    background-color: var(--beige-bg);
+}
+
+.user-topbar {
+    height: 60px;
+    background-color: var(--coffee-darkest);
+    border-bottom: 1px solid var(--coffee-medium);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+@media (max-width: 767.98px) {
+    .user-portal-sidebar {
+        transform: translateX(-100%);
+    }
+    .user-portal-sidebar.show {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    }
+    .user-main-wrapper {
+        margin-left: 0 !important;
+    }
+    .user-sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1035;
+    }
+    .user-sidebar-backdrop.show {
+        display: block;
+    }
+}
+
+/* --------------------------------------------------------------------------
    Footer
    -------------------------------------------------------------------------- */
 .cybershield-footer {
