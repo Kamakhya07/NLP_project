@@ -193,7 +193,7 @@ def require_login_globally():
     if request.path.startswith("/static"):
         return None
 
-    allowed_endpoints = {"login", "register", "quick_login", "logout"}
+    allowed_endpoints = {"login", "register", "quick_login", "logout", "poster"}
     if request.endpoint in allowed_endpoints:
         return None
 
