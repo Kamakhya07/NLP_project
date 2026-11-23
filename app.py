@@ -75,6 +75,8 @@ app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "cybershield-final-year-project-secret-2026"
 )
 app.config["DEBUG"] = os.environ.get("FLASK_DEBUG", "False").lower() in ("true", "1", "yes")
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 app.config["MODEL_TYPE"] = os.environ.get("MODEL_TYPE", "logistic_regression").lower()
 app.config["MAX_INPUT_LENGTH"] = 5000
 
