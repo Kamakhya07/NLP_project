@@ -112,26 +112,18 @@ html, body {
     text-decoration: none;
     transition: all 0.2s ease;
     cursor: pointer;
-}
-
-.role-pill-user {
-    background-color: #3b2416;
-    color: #ffffff !important;
-    border: 1.5px solid #3b2416;
-}
-.role-pill-user:hover {
-    background-color: #27160c;
-    border-color: #27160c;
-}
-
-.role-pill-admin {
     background-color: #ffffff;
-    color: #1e130b !important;
+    color: #1e130b;
     border: 1.5px solid #ded6cc;
 }
-.role-pill-admin:hover {
+.role-pill-btn:hover {
     background-color: #f7f4ee;
     border-color: #3b2416;
+}
+.role-pill-btn.active {
+    background-color: #3b2416 !important;
+    color: #ffffff !important;
+    border-color: #3b2416 !important;
 }
 
 /* Demo Users Row */
@@ -301,11 +293,11 @@ html, body {
 
         <!-- Role Pills: User Demo (Selected) vs Admin Login (Requires Credentials) -->
         <div class="role-pills-row">
-            <button type="button" class="role-pill-btn role-pill-user" id="userPillBtn" onclick="switchToUserLogin()" title="User Mode & Demo Accounts">
+            <button type="button" class="role-pill-btn active" id="userPillBtn" onclick="switchToUserLogin()" title="User Mode & Demo Accounts">
                 <i class="fa-regular fa-user"></i>
                 <span>User Demo</span>
             </button>
-            <button type="button" class="role-pill-btn role-pill-admin" id="adminPillBtn" onclick="switchToAdminLogin()" title="Admin Login (Password Required)">
+            <button type="button" class="role-pill-btn" id="adminPillBtn" onclick="switchToAdminLogin()" title="Admin Login (Password Required)">
                 <i class="fa-solid fa-shield-halved"></i>
                 <span>Admin Login</span>
             </button>
@@ -384,13 +376,10 @@ function switchToAdminLogin() {
     const orDivider = document.getElementById('orDivider');
 
     if (adminPill && userPill) {
-        adminPill.style.backgroundColor = '#3b2416';
-        adminPill.style.color = '#ffffff';
-        adminPill.style.borderColor = '#3b2416';
-
-        userPill.style.backgroundColor = '#ffffff';
-        userPill.style.color = '#1e130b';
-        userPill.style.borderColor = '#ded6cc';
+        adminPill.classList.add('active');
+        userPill.classList.remove('active');
+        adminPill.removeAttribute('style');
+        userPill.removeAttribute('style');
     }
 
     if (demoSection) demoSection.style.display = 'none';
@@ -416,13 +405,10 @@ function switchToUserLogin() {
     const orDivider = document.getElementById('orDivider');
 
     if (adminPill && userPill) {
-        userPill.style.backgroundColor = '#3b2416';
-        userPill.style.color = '#ffffff';
-        userPill.style.borderColor = '#3b2416';
-
-        adminPill.style.backgroundColor = '#ffffff';
-        adminPill.style.color = '#1e130b';
-        adminPill.style.borderColor = '#ded6cc';
+        userPill.classList.add('active');
+        adminPill.classList.remove('active');
+        adminPill.removeAttribute('style');
+        userPill.removeAttribute('style');
     }
 
     if (demoSection) demoSection.style.display = 'block';

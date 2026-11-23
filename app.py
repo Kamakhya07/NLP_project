@@ -759,6 +759,14 @@ def admin_update_settings():
     requested_model = request.form.get("model_type", "").strip().lower()
     admin_name = session.get("username", "admin")
 
+    if requested_model == "distilbert":
+        flash(
+            "DistilBERT Transformer requires dedicated GPU hosting (>1GB RAM) and is disabled on free tier. "
+            "CyberShield is operating on the benchmark-validated TF-IDF + Logistic Regression model.",
+            "warning"
+        )
+        return redirect(url_for("admin_settings"))
+
     if requested_model in SUPPORTED_MODELS:
         try:
             predictor = CyberbullyingPredictor(model_type=requested_model)

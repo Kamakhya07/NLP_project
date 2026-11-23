@@ -150,18 +150,27 @@ class CyberbullyingPredictor:
     _instances: Dict[str, "CyberbullyingPredictor"] = {}
     _model_cache: Dict[str, Dict[str, Any]] = {}
 
-    def __new__(cls, model_type: str = MODEL_DISTILBERT, *args, **kwargs) -> "CyberbullyingPredictor":
+    def __new__(cls, model_type: str = MODEL_LOGISTIC_REGRESSION, *args, **kwargs) -> "CyberbullyingPredictor":
         """
         Multiton pattern: Returns the existing singleton instance for the given
         normalized model_type, avoiding redundant instantiation and model reloading.
         """
         normalized_type = cls._normalize_model_type(model_type)
+        if normalized_type == MODEL_DISTILBERT:
+            distilbert_dir = Path(PATHS[MODEL_DISTILBERT])
+            weight_files = list(distilbert_dir.glob("*.safetensors")) + list(distilbert_dir.glob("*.bin"))
+            # Safely verify that weights exist and are production-ready (>1MB)
+            valid_weights = [f for f in weight_files if f.stat().st_size > 1000000]
+            if not valid_weights:
+                logger.info("DistilBERT production weights not bundled in deployment. Auto-routing instance to 'logistic_regression'.")
+                normalized_type = MODEL_LOGISTIC_REGRESSION
+
         if normalized_type not in cls._instances:
             instance = super(CyberbullyingPredictor, cls).__new__(cls)
             cls._instances[normalized_type] = instance
         return cls._instances[normalized_type]
 
-    def __init__(self, model_type: str = MODEL_DISTILBERT, custom_paths: Optional[Dict[str, Path]] = None) -> None:
+    def __init__(self, model_type: str = MODEL_LOGISTIC_REGRESSION, custom_paths: Optional[Dict[str, Path]] = None) -> None:
         """
         Initialize the predictor service with the specified model type.
 
@@ -268,7 +277,8 @@ class CyberbullyingPredictor:
             ) from err
 
         tfidf_path = Path(self.paths["tfidf_vectorizer"])
-        model_path = Path(self.paths[self.model_type])
+        target_model = self.model_type if self.model_type in (MODEL_LOGISTIC_REGRESSION, MODEL_SVM) else MODEL_LOGISTIC_REGRESSION
+        model_path = Path(self.paths[target_model])
 
         # Verify TF-IDF Vectorizer
         if not tfidf_path.exists():
@@ -280,20 +290,20 @@ class CyberbullyingPredictor:
         # Verify Model file
         if not model_path.exists():
             raise FileNotFoundError(
-                f"Model file for '{self.model_type}' not found at: '{model_path.resolve()}'.\n"
+                f"Model file for '{target_model}' not found at: '{model_path.resolve()}'.\n"
                 f"Please ensure the trained model is saved at the exact path specified:\n"
-                f"  - models/{self.model_type}/model.joblib"
+                f"  - models/{target_model}/model.joblib"
             )
 
         try:
             logger.info(f"Loading TF-IDF vectorizer from '{tfidf_path}'...")
             self.vectorizer = joblib.load(str(tfidf_path))
 
-            logger.info(f"Loading '{self.model_type}' model from '{model_path}'...")
+            logger.info(f"Loading '{target_model}' model from '{model_path}'...")
             self.model = joblib.load(str(model_path))
         except Exception as err:
             raise RuntimeError(
-                f"Failed to load ML artifacts for '{self.model_type}'.\n"
+                f"Failed to load ML artifacts for '{target_model}'.\n"
                 f"Model path: '{model_path}'\nVectorizer path: '{tfidf_path}'\nError: {err}"
             ) from err
 
@@ -409,11 +419,8 @@ class CyberbullyingPredictor:
                     label, confidence = self._predict_single_lr(cleaned_text)
             except Exception as pred_err:
                 logger.warning(f"Error during {self.model_type} inference: {pred_err}. Falling back to Logistic Regression.")
-                try:
-                    label, confidence = self._predict_single_lr(cleaned_text)
-                except Exception as lr_err:
-                    logger.error(f"Logistic Regression fallback failed: {lr_err}. Using baseline safe prediction.")
-                    label, confidence = 0, 0.9500
+                lr_predictor = CyberbullyingPredictor(model_type=MODEL_LOGISTIC_REGRESSION)
+                label, confidence = lr_predictor._predict_single_lr(cleaned_text)
 
         return {
             "prediction": LABEL_MAP[label],
@@ -507,7 +514,8 @@ class CyberbullyingPredictor:
         """Inference for DistilBERT."""
         if self.model is None or self.tokenizer is None:
             logger.warning("DistilBERT model artifacts not loaded. Falling back to Logistic Regression.")
-            return self._predict_single_lr(cleaned_text)
+            lr_predictor = CyberbullyingPredictor(model_type=MODEL_LOGISTIC_REGRESSION)
+            return lr_predictor._predict_single_lr(cleaned_text)
 
         import torch
 

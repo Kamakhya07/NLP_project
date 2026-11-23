@@ -917,15 +917,18 @@ class MongoDBManager:
         active_users = total_users - blocked_users
 
         total_predictions = cls.predictions_col().count_documents({})
-        cyberbullying_predictions = cls.predictions_col().count_documents({"prediction": "Cyberbullying"})
-        non_cyberbullying_predictions = total_predictions - cyberbullying_predictions
+        cyberbullying_predictions = cls.predictions_col().count_documents({"prediction": {"$in": ["Bullying", "Cyberbullying"]}})
+        non_cyberbullying_predictions = max(0, total_predictions - cyberbullying_predictions)
 
-        # Calculate average confidence
+        # Calculate average confidence safely
         pipeline = [
             {"$group": {"_id": None, "avg_conf": {"$avg": "$confidence"}}}
         ]
         conf_res = list(cls.predictions_col().aggregate(pipeline))
-        avg_confidence = round(conf_res[0]["avg_conf"] * 100, 1) if conf_res else 0.0
+        avg_confidence = 0.0
+        if conf_res and conf_res[0].get("avg_conf") is not None:
+            raw_c = float(conf_res[0]["avg_conf"])
+            avg_confidence = round(raw_c * 100, 1) if raw_c <= 1.0 else round(raw_c, 1)
 
         return {
             "total_posts": total_posts,
