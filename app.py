@@ -179,9 +179,36 @@ except Exception as e:
 # ------------------------------------------------------------------------------
 # Social Media & Authentication Routes
 # ------------------------------------------------------------------------------
+@app.before_request
+def require_login_globally():
+    """
+    Enforce authentication globally when user or admin is logged out.
+    When logged out, only the login/auth views and static assets are accessible.
+    """
+    if request.path.startswith("/static"):
+        return None
+
+    allowed_endpoints = {"login", "register", "quick_login", "logout"}
+    if request.endpoint in allowed_endpoints:
+        return None
+
+    user_id = session.get("user_id")
+    if not user_id or not MongoDBManager.get_user_by_id(user_id):
+        return redirect(url_for("login"))
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """User and Administrator authentication."""
+    # If already logged in, redirect directly to appropriate dashboard/feed
+    if "user_id" in session and MongoDBManager.get_user_by_id(session["user_id"]):
+        user = MongoDBManager.get_user_by_id(session["user_id"])
+        if user.get("role") == "admin":
+            return redirect(url_for("admin_dashboard"))
+        return redirect(url_for("feed"))
+
+    demo_users = MongoDBManager.get_demo_users()
+
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
@@ -190,11 +217,11 @@ def login():
         user = MongoDBManager.authenticate(username, password)
         if not user:
             flash("Invalid username or password. Please try again.", "danger")
-            return render_template("login.html")
+            return render_template("login.html", demo_users=demo_users)
 
         if user.get("status") == "blocked":
             flash("Your account has been blocked by an administrator for cyberbullying violations.", "danger")
-            return render_template("login.html")
+            return render_template("login.html", demo_users=demo_users)
 
         session["user_id"] = str(user["_id"])
         session["username"] = user["username"]
@@ -206,7 +233,35 @@ def login():
             return redirect(url_for("admin_dashboard"))
         return redirect(next_url)
 
-    return render_template("login.html")
+    return render_template("login.html", demo_users=demo_users)
+
+
+@app.route("/quick-login/<username>", methods=["GET", "POST"])
+def quick_login(username):
+    """
+    One-click instant login for demo accounts.
+    Immediately authenticates and routes to the appropriate view.
+    """
+    username_clean = username.strip().lower()
+    user = MongoDBManager.get_user_by_username(username_clean)
+    if not user:
+        flash(f"Demo user '{username}' was not found.", "warning")
+        return redirect(url_for("login"))
+
+    if user.get("status") == "blocked":
+        flash(f"Demo user @{username} is currently suspended for safety violations. Please unblock it from the Admin Desk or choose another user.", "danger")
+        return redirect(url_for("login"))
+
+    session["user_id"] = str(user["_id"])
+    session["username"] = user["username"]
+    session["role"] = user.get("role", "user")
+    session["display_name"] = user.get("display_name", user["username"])
+
+    flash(f"Quick-Login successful! Signed in as {session['display_name']} (@{user['username']}).", "success")
+
+    if user.get("role") == "admin":
+        return redirect(url_for("admin_dashboard"))
+    return redirect(url_for("feed"))
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -248,10 +303,10 @@ def register():
 
 @app.route("/logout")
 def logout():
-    """Sign out current user."""
+    """Sign out current user and return directly to login page."""
     session.clear()
     flash("You have been signed out.", "info")
-    return redirect(url_for("feed"))
+    return redirect(url_for("login"))
 
 
 @app.route("/feed")

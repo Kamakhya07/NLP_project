@@ -102,7 +102,7 @@ class MongoDBManager:
     def _seed_defaults(cls) -> None:
         users = cls.users_col()
 
-        # Seed Admin
+        # Seed Admin Account
         if not users.find_one({"username": "admin"}):
             admin_user = {
                 "username": "admin",
@@ -118,29 +118,82 @@ class MongoDBManager:
             users.insert_one(admin_user)
             logger.info("Seeded default admin account: admin / admin123")
 
-        # Seed Demo User
-        demo_user = users.find_one({"username": "user"})
-        if not demo_user:
-            demo_user = {
+        # Seed Total 5 Standard Demo Users
+        demo_accounts = [
+            {
                 "username": "user",
-                "email": "user@example.com",
-                "password_hash": generate_password_hash("user123"),
-                "display_name": "Demo User",
+                "email": "alex.rivera@example.com",
+                "password": "user123",
+                "display_name": "Alex Rivera",
                 "role": "user",
-                "status": "active",
-                "strikes_count": 0,
-                "bio": "Active community member & social explorer",
-                "created_at": datetime.utcnow()
+                "bio": "Tech creator & digital explorer 🚀"
+            },
+            {
+                "username": "sarah_m",
+                "email": "sarah.miller@example.com",
+                "password": "user123",
+                "display_name": "Sarah Miller",
+                "role": "user",
+                "bio": "AI ethics researcher & digital safety advocate 🌿"
+            },
+            {
+                "username": "david_k",
+                "email": "david.kim@example.com",
+                "password": "user123",
+                "display_name": "David Kim",
+                "role": "user",
+                "bio": "Frontend developer & coffee lover ☕"
+            },
+            {
+                "username": "emily_r",
+                "email": "emily.rose@example.com",
+                "password": "user123",
+                "display_name": "Emily Rose",
+                "role": "user",
+                "bio": "Cyber wellbeing educator & community ambassador 🛡️"
+            },
+            {
+                "username": "marcus_t",
+                "email": "marcus.turner@example.com",
+                "password": "user123",
+                "display_name": "Marcus Turner",
+                "role": "user",
+                "bio": "Data scientist & open-source contributor 📊"
             }
-            res = users.insert_one(demo_user)
-            demo_user["_id"] = res.inserted_id
-            logger.info("Seeded default demo user account: user / user123")
+        ]
+
+        for acc in demo_accounts:
+            existing = users.find_one({"username": acc["username"]})
+            if not existing:
+                doc = {
+                    "username": acc["username"],
+                    "email": acc["email"],
+                    "password_hash": generate_password_hash(acc["password"]),
+                    "display_name": acc["display_name"],
+                    "role": acc["role"],
+                    "status": "active",
+                    "strikes_count": 0,
+                    "bio": acc["bio"],
+                    "created_at": datetime.utcnow()
+                }
+                users.insert_one(doc)
+                logger.info(f"Seeded demo account: {acc['username']} / {acc['password']}")
+            else:
+                # Ensure demo accounts stay unblocked with valid password on reset
+                users.update_one(
+                    {"username": acc["username"]},
+                    {"$set": {
+                        "password_hash": generate_password_hash(acc["password"]),
+                        "display_name": acc["display_name"],
+                        "bio": acc["bio"]
+                    }}
+                )
 
         # Seed a welcoming verified post if feed is empty
         posts = cls.posts_col()
         if posts.count_documents({}) == 0:
             welcome_post = {
-                "user_id": str(demo_user["_id"]) if "_id" in demo_user else "system",
+                "user_id": "system",
                 "username": "CyberShield_Bot",
                 "display_name": "CyberShield AI System",
                 "content": "Welcome to CyberShield Social! 🛡️ All posts are monitored in real-time by AI models to keep online spaces respectful and bully-free.",
@@ -160,6 +213,98 @@ class MongoDBManager:
             }
             posts.insert_one(welcome_post)
             logger.info("Seeded welcome tweet on timeline.")
+
+    @classmethod
+    def get_demo_users(cls) -> List[Dict[str, Any]]:
+        """Returns the curated list of demo accounts for one-click login."""
+        demo_specs = [
+            {
+                "username": "admin",
+                "display_name": "Shield Administrator",
+                "tag": "Platform Admin",
+                "icon": "fa-user-shield",
+                "color_bg": "#241710",
+                "color_fg": "#ffffff",
+                "badge_bg": "#4d3625",
+                "badge_fg": "#ded5c5",
+                "bio": "Platform Security & Moderation Console",
+                "role": "admin"
+            },
+            {
+                "username": "user",
+                "display_name": "Alex Rivera",
+                "tag": "Demo User 1",
+                "icon": "fa-laptop-code",
+                "color_bg": "#556b2f",
+                "color_fg": "#ffffff",
+                "badge_bg": "#eaf0dd",
+                "badge_fg": "#3f4e1c",
+                "bio": "Tech creator & digital explorer 🚀",
+                "role": "user"
+            },
+            {
+                "username": "sarah_m",
+                "display_name": "Sarah Miller",
+                "tag": "Demo User 2",
+                "icon": "fa-seedling",
+                "color_bg": "#4d3625",
+                "color_fg": "#ffffff",
+                "badge_bg": "#f0e9dd",
+                "badge_fg": "#4d3625",
+                "bio": "AI ethics researcher & digital safety 🌿",
+                "role": "user"
+            },
+            {
+                "username": "david_k",
+                "display_name": "David Kim",
+                "tag": "Demo User 3",
+                "icon": "fa-mug-hot",
+                "color_bg": "#637a37",
+                "color_fg": "#ffffff",
+                "badge_bg": "#dbe4c7",
+                "badge_fg": "#2d3814",
+                "bio": "Frontend designer & tech enthusiast ☕",
+                "role": "user"
+            },
+            {
+                "username": "emily_r",
+                "display_name": "Emily Rose",
+                "tag": "Demo User 4",
+                "icon": "fa-shield-heart",
+                "color_bg": "#82634a",
+                "color_fg": "#ffffff",
+                "badge_bg": "#faeaea",
+                "badge_fg": "#b83a3a",
+                "bio": "Cyber wellbeing educator & community 🛡️",
+                "role": "user"
+            },
+            {
+                "username": "marcus_t",
+                "display_name": "Marcus Turner",
+                "tag": "Demo User 5",
+                "icon": "fa-chart-column",
+                "color_bg": "#3f4e1c",
+                "color_fg": "#ffffff",
+                "badge_bg": "#eaf0dd",
+                "badge_fg": "#2d3814",
+                "bio": "Data scientist & open-source contributor 📊",
+                "role": "user"
+            }
+        ]
+
+        users = cls.users_col()
+        result = []
+        for spec in demo_specs:
+            user_doc = users.find_one({"username": spec["username"]})
+            if user_doc:
+                spec["status"] = user_doc.get("status", "active")
+                spec["strikes_count"] = user_doc.get("strikes_count", 0)
+                spec["_id"] = str(user_doc["_id"])
+            else:
+                spec["status"] = "active"
+                spec["strikes_count"] = 0
+            result.append(spec)
+        return result
 
     # --------------------------------------------------------------------------
     # User Authentication & Management

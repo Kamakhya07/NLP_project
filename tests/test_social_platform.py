@@ -23,16 +23,24 @@ def run_tests():
 
     client = app.test_client()
 
-    # 1. Test Feed Page
+    # 1. Test Unauthenticated Access is redirected to Login
     resp = client.get("/feed")
-    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
-    assert b"CyberShield Social Feed" in resp.data
-    print("[PASS] 1. Feed page accessible (HTTP 200)")
+    assert resp.status_code == 302, f"Expected 302 redirect for logged-out user, got {resp.status_code}"
+    assert "/login" in resp.headers.get("Location", "")
+    print("[PASS] 1. Logged out user correctly redirected to Login page")
 
-    # 2. Test User Login
+    # 1b. Test One-Click Quick Login for Demo User
+    resp = client.get("/quick-login/user", follow_redirects=True)
+    assert resp.status_code == 200
+    assert b"CyberShield Social Feed" in resp.data
+    print("[PASS] 1b. One-click quick login for demo user successful")
+
+    # 2. Test User Login Form
+    with client.session_transaction() as sess:
+        sess.clear()
     resp = client.post("/login", data={"username": "user", "password": "user123"}, follow_redirects=True)
     assert resp.status_code == 200
-    assert b"Demo User" in resp.data
+    assert b"Alex Rivera" in resp.data or b"Demo User" in resp.data
     print("[PASS] 2. User login successful")
 
     # 3. Test Clean Post Creation
@@ -115,8 +123,21 @@ def run_tests():
     assert restored_user["status"] == "active"
     print(f"[PASS] 10. Admin successfully restored user access (Status: {restored_user['status']})")
 
+    # 11. Test Logout: User or admin logged out shows the login page only
+    resp = client.get("/logout", follow_redirects=True)
+    assert resp.status_code == 200
+    assert b"Account Sign In" in resp.data
+    assert b"One-Click Demo Access" in resp.data
+    print("[PASS] 11. Logged out session properly returns to the login page only")
+
+    # 12. Verify that after logging out, accessing /feed redirects to /login
+    resp = client.get("/feed")
+    assert resp.status_code == 302
+    assert "/login" in resp.headers.get("Location", "")
+    print("[PASS] 12. Subsequent protected access while logged out strictly routes to login")
+
     print("\n=======================================================")
-    print(" ALL 10 SOCIAL PLATFORM & MODERATION TESTS PASSED 100%!")
+    print(" ALL SOCIAL PLATFORM, AUTH & MODERATION TESTS PASSED 100%!")
     print("=======================================================")
 
 if __name__ == "__main__":

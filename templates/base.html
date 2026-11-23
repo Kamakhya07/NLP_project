@@ -40,6 +40,7 @@
 
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-lg-2 align-items-lg-center">
+                    {% if current_user %}
                     <li class="nav-item">
                         <a class="nav-link px-3 rounded-pill {% if request.endpoint == 'feed' %}active{% endif %}" href="{{ url_for('feed') }}">
                             <i class="fa-solid fa-feather-pointed me-1"></i> Feed
@@ -55,14 +56,13 @@
                             <i class="fa-solid fa-chart-pie me-1"></i> Dashboard
                         </a>
                     </li>
-                    {% if current_user and current_user.role == 'admin' %}
+                    {% if current_user.role == 'admin' %}
                     <li class="nav-item">
                         <a class="nav-link px-3 rounded-pill fw-semibold {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}" style="color: #dbe4c7;">
                             <i class="fa-solid fa-shield-halved me-1 text-warning"></i> Admin Desk
                         </a>
                     </li>
                     {% endif %}
-                    {% if current_user %}
                     <li class="nav-item position-relative">
                         <a class="nav-link px-3 rounded-pill {% if request.endpoint == 'notifications' %}active{% endif %}" href="{{ url_for('notifications') }}" title="Notifications">
                             <i class="fa-solid fa-bell"></i>

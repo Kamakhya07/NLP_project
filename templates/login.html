@@ -1,21 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Sign In | CyberShield Social{% endblock %}
+{% block title %}Sign In | CyberShield Platform{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-sm overflow-hidden" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
-                <div class="card-header p-4 text-center border-bottom" style="background-color: var(--beige-card); border-color: var(--beige-border) !important;">
-                    <div class="brand-icon-wrapper mx-auto mb-2" style="width: 48px; height: 48px; font-size: 1.4rem; background-color: var(--coffee-warm); color: white;">
+<div class="container py-4">
+    <!-- Notice Banner for Logged-Out Access -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10">
+            <div class="p-3 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2 border" style="background-color: #fdfbf7; border-color: var(--beige-border) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: var(--coffee-darkest); color: #fdfbf7;">
                         <i class="fa-solid fa-shield-halved text-warning"></i>
                     </div>
-                    <h4 class="fw-bold mb-1" style="color: var(--coffee-darkest);">Welcome to CyberShield</h4>
-                    <p class="small mb-0" style="color: var(--beige-muted);">Sign in to publish comments and view moderation status</p>
+                    <div>
+                        <h6 class="fw-bold mb-0" style="color: var(--coffee-darkest);">Authentication Required</h6>
+                        <span class="small text-secondary">Sign in below or click any demo profile to test moderation and posting directly.</span>
+                    </div>
                 </div>
-                <div class="card-body p-4">
-                    <form method="POST" action="{{ url_for('login') }}">
+                <span class="badge rounded-pill fw-semibold px-3 py-2" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
+                    <i class="fa-solid fa-lock-open me-1"></i> 5 Demo Users + Admin Ready
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center g-4">
+        <!-- Left Column: Standard Credentials Sign In Form -->
+        <div class="col-lg-5 col-md-6">
+            <div class="card shadow-sm h-100 overflow-hidden" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                <div class="card-header p-4 text-center border-bottom" style="background-color: var(--beige-card); border-color: var(--beige-border) !important;">
+                    <div class="brand-icon-wrapper mx-auto mb-2" style="width: 44px; height: 44px; font-size: 1.3rem; background-color: var(--coffee-warm); color: white;">
+                        <i class="fa-solid fa-shield-cat"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color: var(--coffee-darkest);">Account Sign In</h5>
+                    <p class="small mb-0 text-secondary">Enter credentials to access CyberShield Social & Moderation</p>
+                </div>
+
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <form method="POST" action="{{ url_for('login') }}" id="loginForm">
                         <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
 
                         <div class="mb-3">
@@ -24,7 +46,7 @@
                                 <span class="input-group-text border-end-0" style="background-color: #f7f4ee; border-color: var(--beige-border); color: var(--coffee-muted);">
                                     <i class="fa-solid fa-user"></i>
                                 </span>
-                                <input type="text" class="form-control border-start-0" style="border-color: var(--beige-border); color: var(--coffee-darkest);" id="username" name="username" placeholder="Enter username" required autofocus>
+                                <input type="text" class="form-control border-start-0" style="border-color: var(--beige-border); color: var(--coffee-darkest);" id="username" name="username" placeholder="e.g. admin or user" required autofocus>
                             </div>
                         </div>
 
@@ -41,40 +63,95 @@
                         </div>
 
                         <button type="submit" class="btn btn-saas-primary w-100 py-2 fw-semibold rounded-pill shadow-sm mb-3">
-                            <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign In
+                            <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign In to Account
                         </button>
                     </form>
 
-                    <div class="d-flex align-items-center my-3">
-                        <hr class="flex-grow-1" style="border-color: var(--beige-border);">
-                        <span class="px-3 small" style="color: var(--beige-muted);">Demo Quick Login</span>
-                        <hr class="flex-grow-1" style="border-color: var(--beige-border);">
+                    <div class="text-center pt-3 border-top" style="border-color: var(--beige-border) !important;">
+                        <span class="small text-secondary">New community member?</span>
+                        <a href="{{ url_for('register') }}" class="small fw-semibold ms-1 text-decoration-none" style="color: var(--olive-dark);">Create account &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Total 5 Demo Users + Admin Quick-Login (Click to Sign In Instantly) -->
+        <div class="col-lg-7 col-md-6">
+            <div class="card shadow-sm h-100" style="background-color: #ffffff; border: 1px solid var(--beige-border); border-radius: 12px;">
+                <div class="card-header p-3 px-4 d-flex justify-content-between align-items-center border-bottom" style="background-color: var(--beige-card); border-color: var(--beige-border) !important;">
+                    <div>
+                        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color: var(--coffee-darkest);">
+                            <i class="fa-solid fa-bolt text-warning"></i> One-Click Demo Access
+                        </h6>
+                        <span class="fs-xs text-secondary">Click on any profile below to sign in immediately without typing</span>
+                    </div>
+                    <span class="badge rounded-pill fw-bold" style="background-color: var(--coffee-darkest); color: #fdfbf7;">
+                        6 Active Roles
+                    </span>
+                </div>
+
+                <div class="card-body p-3 p-md-4">
+                    <!-- Admin Special Demo Card -->
+                    <div class="mb-3">
+                        <div class="text-uppercase fs-xs fw-bold tracking-wider mb-2" style="color: var(--coffee-muted);">
+                            <i class="fa-solid fa-user-shield text-warning me-1"></i> Administrator Role
+                        </div>
+                        <a href="{{ url_for('quick_login', username='admin') }}" class="demo-login-card p-3 rounded-3 d-flex align-items-center justify-content-between text-decoration-none border shadow-sm transition-all" style="background-color: #241710; border-color: #3d2a1d !important; color: #fdfbf7;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background-color: #4d3625; color: #ded5c5; font-size: 1.2rem;">
+                                    <i class="fa-solid fa-shield-halved text-warning"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong class="text-light">Shield Administrator</strong>
+                                        <span class="badge rounded-pill" style="background-color: #556b2f; color: #ffffff; font-size: 0.65rem;">ADMIN</span>
+                                        <span class="badge rounded-pill" style="background-color: #3d2a1d; color: #ded5c5; font-size: 0.65rem;">@admin</span>
+                                    </div>
+                                    <div class="fs-xs text-secondary mt-1">Platform Security, Content Moderation Queue & AI Telemetry</div>
+                                </div>
+                            </div>
+                            <div class="btn btn-sm rounded-pill fw-bold px-3 py-1 flex-shrink-0" style="background-color: var(--olive-medium); color: #ffffff;">
+                                Login &rarr;
+                            </div>
+                        </a>
                     </div>
 
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <button type="button" class="btn w-100 btn-sm rounded-3 py-2 text-start d-flex align-items-center gap-2" style="background-color: #f7f4ee; border: 1px solid var(--beige-border); color: var(--coffee-darkest);" onclick="quickFill('admin', 'admin123')">
-                                <i class="fa-solid fa-user-shield fs-5 text-warning"></i>
-                                <div>
-                                    <div class="fw-bold small lh-1">Admin</div>
-                                    <div class="fs-xs text-muted">Moderator</div>
-                                </div>
-                            </button>
+                    <!-- 5 Community Demo Users -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-uppercase fs-xs fw-bold tracking-wider" style="color: var(--coffee-muted);">
+                                <i class="fa-solid fa-users me-1" style="color: var(--olive-medium);"></i> 5 Community Demo Users (Click to Login)
+                            </span>
+                            <span class="fs-xs text-secondary">Password: <code>user123</code></span>
                         </div>
-                        <div class="col-6">
-                            <button type="button" class="btn w-100 btn-sm rounded-3 py-2 text-start d-flex align-items-center gap-2" style="background-color: #eaf0dd; border: 1px solid #c9d8ad; color: var(--olive-dark);" onclick="quickFill('user', 'user123')">
-                                <i class="fa-solid fa-circle-user fs-5" style="color: var(--olive-medium);"></i>
-                                <div>
-                                    <div class="fw-bold small lh-1">Demo User</div>
-                                    <div class="fs-xs" style="color: var(--olive-warm);">Poster</div>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="text-center pt-2 border-top" style="border-color: var(--beige-border) !important;">
-                        <span class="small" style="color: var(--beige-muted);">Don't have an account?</span>
-                        <a href="{{ url_for('register') }}" class="small fw-semibold ms-1 text-decoration-none" style="color: var(--olive-dark);">Sign up</a>
+                        <div class="row g-2">
+                            {% for u in demo_users %}
+                            {% if u.username != 'admin' %}
+                            <div class="col-12 col-xl-6">
+                                <a href="{{ url_for('quick_login', username=u.username) }}" class="demo-user-box p-3 rounded-3 d-flex align-items-center justify-content-between text-decoration-none border h-100" style="background-color: #fdfbf7; border-color: var(--beige-border) !important; transition: all 0.2s ease-in-out;">
+                                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background-color: {{ u.color_bg }}; color: {{ u.color_fg }}; font-weight: 700; font-size: 0.85rem;">
+                                            <i class="fa-solid {{ u.icon }}"></i>
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <div class="d-flex align-items-center gap-1">
+                                                <div class="fw-bold small text-truncate" style="color: var(--coffee-darkest);">{{ u.display_name }}</div>
+                                                <span class="badge rounded-pill flex-shrink-0" style="background-color: {{ u.badge_bg }}; color: {{ u.badge_fg }}; font-size: 0.62rem;">
+                                                    {{ u.tag }}
+                                                </span>
+                                            </div>
+                                            <div class="fs-xs text-muted text-truncate">@{{ u.username }} &bull; {{ u.bio }}</div>
+                                        </div>
+                                    </div>
+                                    <span class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0 ms-2 flex-shrink-0 fs-xs" style="color: var(--coffee-warm); border-color: var(--beige-border);">
+                                        Sign In &rarr;
+                                    </span>
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -82,10 +159,17 @@
     </div>
 </div>
 
-<script>
-function quickFill(user, pass) {
-    document.getElementById('username').value = user;
-    document.getElementById('password').value = pass;
+<style>
+.demo-login-card:hover {
+    background-color: #1e140d !important;
+    border-color: var(--olive-medium) !important;
+    transform: translateY(-2px);
 }
-</script>
+.demo-user-box:hover {
+    background-color: #f7f4ee !important;
+    border-color: var(--olive-medium) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+</style>
 {% endblock %}
