@@ -238,8 +238,7 @@ def login():
     except Exception as db_err:
         logger.error(f"MongoDB connection error on login page: {db_err}")
         flash(
-            "Database Connection Notice: Could not connect to MongoDB. "
-            "Please check that MONGO_URI is configured correctly in Render.",
+            f"Database Connection Notice: {str(db_err)[:150]}. Please check your MONGO_URI in Render.",
             "danger"
         )
 

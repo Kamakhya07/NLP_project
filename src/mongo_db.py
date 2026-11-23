@@ -49,10 +49,15 @@ class MongoDBManager:
 
     @classmethod
     def get_db(cls) -> Database:
-        if cls._db is None:
-            client = cls.get_client()
-            cls._db = client[DB_NAME]
-        return cls._db
+        try:
+            if cls._db is None or cls._client is None:
+                client = cls.get_client()
+                cls._db = client[DB_NAME]
+            return cls._db
+        except Exception as e:
+            cls._client = None
+            cls._db = None
+            raise e
 
     @classmethod
     def users_col(cls) -> Collection:
