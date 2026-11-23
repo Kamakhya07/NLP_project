@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cybershield-platform
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT app:app
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: MODEL_TYPE
+        value: logistic_regression
+      - key: MONGO_DB_NAME
+        value: cybershield_db
+      - key: MONGO_URI
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
