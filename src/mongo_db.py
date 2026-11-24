@@ -868,6 +868,21 @@ class MongoDBManager:
         preds_col = cls.predictions_col()
         total_count = preds_col.count_documents({"user_id": uid})
         if total_count == 0:
+            # Fallback auto-sync: populate prediction history from user's posts
+            user_posts = list(cls.posts_col().find({"user_id": uid}))
+            if user_posts:
+                for p in user_posts:
+                    mod = p.get("moderation") or {}
+                    cls.save_prediction(
+                        text_snippet=p.get("content", ""),
+                        prediction=mod.get("prediction", "Non-Bullying"),
+                        confidence=float(mod.get("confidence", 0.5)),
+                        model_type=mod.get("model_used", "TF-IDF + Logistic Regression"),
+                        user_id=uid
+                    )
+                total_count = preds_col.count_documents({"user_id": uid})
+
+        if total_count == 0:
             return empty_res
 
         # Bullying vs Non-Bullying
