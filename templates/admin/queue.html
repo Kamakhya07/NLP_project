@@ -39,7 +39,7 @@
                             <div class="text-muted fs-xs">
                                 <span>@{{ post.username }}</span>
                                 <span class="mx-1">&bull;</span>
-                                <span>Submitted: {{ post.created_at.strftime('%b %d, %Y at %H:%M') if post.created_at else 'Recent' }}</span>
+                                <span>Submitted: {{ post.created_at.strftime('%b %d, %Y at %I:%M %p IST') if post.created_at else 'Recent' }}</span>
                             </div>
                         </div>
                     </div>

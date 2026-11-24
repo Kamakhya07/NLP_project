@@ -10,7 +10,7 @@ Provides unified data access layer for:
 import os
 import re
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, List
 from bson import ObjectId
 from pymongo import MongoClient, ASCENDING, DESCENDING
@@ -19,6 +19,17 @@ from pymongo.database import Database
 from werkzeug.security import generate_password_hash, check_password_hash
 
 logger = logging.getLogger(__name__)
+
+# Indian Standard Time (IST, UTC+5:30)
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def to_ist(dt: Any) -> Any:
+    """Converts a UTC or naive datetime to Indian Standard Time (IST)."""
+    if isinstance(dt, datetime):
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(IST)
+    return dt
 
 def get_mongo_uri() -> str:
     """Retrieves MongoDB URI with fallback support across common environment variable naming and files."""
@@ -495,7 +506,11 @@ class MongoDBManager:
             sort_field = "username"
             sort_dir = ASCENDING
 
-        return list(cls.users_col().find(query).sort(sort_field, sort_dir))
+        users = list(cls.users_col().find(query).sort(sort_field, sort_dir))
+        for u in users:
+            if u.get("created_at"):
+                u["created_at"] = to_ist(u["created_at"])
+        return users
 
     # --------------------------------------------------------------------------
     # Activity Logs & Moderation History
@@ -527,7 +542,11 @@ class MongoDBManager:
         query = {}
         if action_filter and action_filter != "all":
             query["action"] = action_filter
-        return list(cls.activity_logs_col().find(query).sort("timestamp", DESCENDING).limit(limit))
+        logs = list(cls.activity_logs_col().find(query).sort("timestamp", DESCENDING).limit(limit))
+        for l in logs:
+            if l.get("timestamp"):
+                l["timestamp"] = to_ist(l["timestamp"])
+        return logs
 
     @classmethod
     def get_moderation_history(cls, limit: int = 100, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -540,7 +559,13 @@ class MongoDBManager:
         }
         if status_filter and status_filter != "all":
             query["status"] = status_filter
-        return list(cls.posts_col().find(query).sort("created_at", DESCENDING).limit(limit))
+        posts = list(cls.posts_col().find(query).sort("created_at", DESCENDING).limit(limit))
+        for p in posts:
+            if p.get("created_at"):
+                p["created_at"] = to_ist(p["created_at"])
+            if p.get("moderation", {}).get("reviewed_at"):
+                p["moderation"]["reviewed_at"] = to_ist(p["moderation"]["reviewed_at"])
+        return posts
 
     # --------------------------------------------------------------------------
     # Posts & Twitter-like Social Feed
@@ -608,27 +633,41 @@ class MongoDBManager:
 
     @classmethod
     def get_feed_posts(cls, limit: int = 50) -> List[Dict[str, Any]]:
-        """Returns verified, published posts for the public timeline."""
-        return list(
+        """Returns verified, published posts for the public timeline in IST."""
+        posts = list(
             cls.posts_col()
             .find({"status": "published"})
             .sort("created_at", DESCENDING)
             .limit(limit)
         )
+        for p in posts:
+            if p.get("created_at"):
+                p["created_at"] = to_ist(p["created_at"])
+        return posts
 
     @classmethod
     def get_quarantined_posts(cls) -> List[Dict[str, Any]]:
-        """Returns all hate/bullying posts awaiting admin moderation."""
-        return list(
+        """Returns all hate/bullying posts awaiting admin moderation in IST."""
+        posts = list(
             cls.posts_col()
             .find({"status": "quarantined"})
             .sort("created_at", DESCENDING)
         )
+        for p in posts:
+            if p.get("created_at"):
+                p["created_at"] = to_ist(p["created_at"])
+        return posts
 
     @classmethod
     def get_post_by_id(cls, post_id: str) -> Optional[Dict[str, Any]]:
         try:
-            return cls.posts_col().find_one({"_id": ObjectId(post_id)})
+            post = cls.posts_col().find_one({"_id": ObjectId(post_id)})
+            if post:
+                if post.get("created_at"):
+                    post["created_at"] = to_ist(post["created_at"])
+                if post.get("moderation", {}).get("reviewed_at"):
+                    post["moderation"]["reviewed_at"] = to_ist(post["moderation"]["reviewed_at"])
+            return post
         except Exception:
             return None
 
@@ -753,12 +792,16 @@ class MongoDBManager:
 
     @classmethod
     def get_user_notifications(cls, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
-        return list(
+        notifs = list(
             cls.notifications_col()
             .find({"user_id": str(user_id)})
             .sort("created_at", DESCENDING)
             .limit(limit)
         )
+        for n in notifs:
+            if n.get("created_at"):
+                n["created_at"] = to_ist(n["created_at"])
+        return notifs
 
     @classmethod
     def get_unread_count(cls, user_id: str) -> int:
@@ -833,7 +876,7 @@ class MongoDBManager:
             doc["id"] = str(doc["_id"])[-6:]  # Short display ID
             ts = doc.get("timestamp")
             if isinstance(ts, datetime):
-                doc["timestamp"] = ts.strftime("%Y-%m-%d %H:%M:%S")
+                doc["timestamp"] = to_ist(ts).strftime("%Y-%m-%d %H:%M:%S IST")
             elif isinstance(ts, str):
                 doc["timestamp"] = ts
             else:

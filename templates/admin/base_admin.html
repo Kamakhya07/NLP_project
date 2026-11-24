@@ -447,28 +447,13 @@
 
     <!-- 2. Main Workspace -->
     <div class="saas-main-wrapper">
-        <!-- Topbar: Clean & Minimal (Tabs in Sidebar Only) -->
-        <header class="saas-topbar">
-            <div class="d-flex align-items-center gap-3">
-                <button class="mobile-toggle-btn" type="button" onclick="toggleSidebar()">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: #eaf0dd; color: #3f4e1c; border: 1px solid #c9d8ad;">
-                        <i class="fa-solid fa-circle-check me-1" style="color: #556b2f;"></i> MongoDB Active
-                    </span>
-                    <span class="text-muted small d-none d-md-inline">&bull;</span>
-                    <span class="text-secondary small d-none d-md-inline">Model: <strong>{{ current_model_name|default('TF-IDF + Logistic Regression') }}</strong></span>
-                </div>
-            </div>
-
-            <div class="d-flex align-items-center gap-3">
-                <div class="d-flex align-items-center gap-2 text-muted small d-none d-sm-flex">
-                    <i class="fa-solid fa-shield-halved" style="color: var(--olive-medium);"></i>
-                    <span style="color: var(--coffee-dark);">CyberShield Console</span>
-                </div>
-            </div>
-        </header>
+        <!-- Mobile Sidebar Toggle (Visible only on small screens) -->
+        <div class="d-lg-none p-3 pb-0">
+            <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" type="button" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
+                <span>Menu</span>
+            </button>
+        </div>
 
         <!-- Flash Notifications -->
         <div class="container-fluid px-4 pt-3">

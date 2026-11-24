@@ -127,7 +127,7 @@
                                         <i class="fa-solid fa-user-secret me-1"></i> Anonymous
                                     </span>
                                     <span class="small text-secondary">&bull;</span>
-                                    <span class="small text-secondary">{{ post.created_at.strftime('%b %d, %H:%M') if post.created_at else 'Just now' }}</span>
+                                    <span class="small text-secondary">{{ post.created_at.strftime('%b %d, %I:%M %p IST') if post.created_at else 'Just now' }}</span>
                                     <span class="badge rounded-pill fs-xs ms-auto" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
                                         <i class="fa-solid fa-circle-check me-1" style="color: var(--olive-medium);"></i> Safe
                                     </span>
@@ -141,7 +141,7 @@
                                     <span class="fw-bold" style="color: var(--coffee-darkest);">{{ post.display_name }}</span>
                                     <span class="small" style="color: var(--beige-muted);">@{{ post.username }}</span>
                                     <span class="small text-secondary">&bull;</span>
-                                    <span class="small text-secondary">{{ post.created_at.strftime('%b %d, %H:%M') if post.created_at else 'Just now' }}</span>
+                                    <span class="small text-secondary">{{ post.created_at.strftime('%b %d, %I:%M %p IST') if post.created_at else 'Just now' }}</span>
                                     <span class="badge rounded-pill fs-xs ms-auto" style="background-color: var(--olive-tint); color: var(--olive-dark); border: 1px solid var(--olive-subtle);">
                                         <i class="fa-solid fa-circle-check me-1" style="color: var(--olive-medium);"></i> Safe
                                     </span>

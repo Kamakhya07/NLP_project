@@ -77,6 +77,21 @@ DB_PATH = os.path.join(DATABASE_DIR, "predictions.db")
 
 app = Flask(__name__)
 
+# Indian Standard Time (IST, UTC+5:30)
+from datetime import timezone, timedelta
+IST = timezone(timedelta(hours=5, minutes=30))
+
+@app.template_filter("to_ist")
+def to_ist_filter(dt, fmt="%b %d, %H:%M"):
+    """Jinja filter to convert and format any UTC datetime in Indian Standard Time (IST)."""
+    if not dt:
+        return "Recent"
+    if isinstance(dt, datetime):
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(IST).strftime(fmt)
+    return str(dt)
+
 # Configuration parameters
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "cybershield-final-year-project-secret-2026"
@@ -1000,7 +1015,7 @@ def analyze():
             probabilities=probabilities,
             model_type=model_name_used,
             record_id=record_id,
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            timestamp=datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST"),
             genai=genai_data,
             extracted_info=extracted_info,
             topic_info=topic_info,

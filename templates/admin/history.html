@@ -91,7 +91,7 @@
                             {{ p.moderation.reviewed_by|default('AI System') }}
                         </td>
                         <td class="text-end pe-4 text-muted fs-xs">
-                            {{ p.moderation.reviewed_at.strftime('%b %d, %H:%M') if p.moderation.reviewed_at else (p.created_at.strftime('%b %d, %H:%M') if p.created_at else 'Recent') }}
+                            {{ p.moderation.reviewed_at.strftime('%b %d, %I:%M %p IST') if p.moderation.reviewed_at else (p.created_at.strftime('%b %d, %I:%M %p IST') if p.created_at else 'Recent') }}
                         </td>
                     </tr>
                     {% endfor %}

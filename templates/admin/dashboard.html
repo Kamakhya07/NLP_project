@@ -131,7 +131,7 @@
                             {{ p.content }}
                         </p>
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top" style="border-color: #eeddc8 !important;">
-                            <span class="text-muted fs-xs"><i class="fa-solid fa-clock me-1"></i> {{ p.created_at.strftime('%b %d, %H:%M') if p.created_at else 'Recent' }}</span>
+                            <span class="text-muted fs-xs"><i class="fa-solid fa-clock me-1"></i> {{ p.created_at.strftime('%b %d, %I:%M %p IST') if p.created_at else 'Recent' }}</span>
                             <div class="d-flex align-items-center gap-2">
                                 <form method="POST" action="{{ url_for('admin_approve_post', post_id=p._id) }}" class="d-inline">
                                     <button type="submit" class="btn btn-sm py-1 px-3 rounded-pill fw-semibold" style="background-color: #556b2f !important; color: #ffffff !important; font-size: 0.75rem; border: none;">
@@ -192,7 +192,7 @@
                         <div class="flex-grow-1 overflow-hidden">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <span class="fw-bold small" style="color: var(--coffee-darkest);">@{{ act.admin_username }}</span>
-                                <span class="text-muted fs-xs">{{ act.timestamp.strftime('%H:%M, %b %d') if act.timestamp else 'Just now' }}</span>
+                                <span class="text-muted fs-xs">{{ act.timestamp.strftime('%I:%M %p IST, %b %d') if act.timestamp else 'Just now' }}</span>
                             </div>
                             <div class="text-secondary fs-xs text-truncate">{{ act.details }}</div>
                         </div>
@@ -283,7 +283,7 @@
                                     </span>
                                 </td>
                                 <td class="text-end pe-3 text-muted fs-xs text-nowrap">
-                                    {{ p.moderation.reviewed_at.strftime('%b %d, %H:%M') if p.moderation.reviewed_at else (p.created_at.strftime('%b %d, %H:%M') if p.created_at else 'Recent') }}
+                                    {{ p.moderation.reviewed_at.strftime('%b %d, %I:%M %p IST') if p.moderation.reviewed_at else (p.created_at.strftime('%b %d, %I:%M %p IST') if p.created_at else 'Recent') }}
                                 </td>
                             </tr>
                             {% endfor %}

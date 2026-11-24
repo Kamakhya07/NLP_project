@@ -93,7 +93,7 @@
                             {{ l.details }}
                         </td>
                         <td class="text-end pe-4 text-muted fs-xs">
-                            {{ l.timestamp.strftime('%b %d, %Y %H:%M:%S') if l.timestamp else 'Recent' }}
+                            {{ l.timestamp.strftime('%b %d, %Y %I:%M:%S %p IST') if l.timestamp else 'Recent' }}
                         </td>
                     </tr>
                     {% endfor %}
