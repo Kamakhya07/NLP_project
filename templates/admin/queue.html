@@ -28,7 +28,14 @@
                             {{ post.display_name[0]|upper }}
                         </div>
                         <div>
-                            <div class="fw-bold text-dark fs-6">{{ post.display_name }}</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-dark fs-6">{{ post.display_name }}</span>
+                                {% if post.is_anonymous %}
+                                <span class="badge rounded-pill px-2 py-0 fs-xs border" style="background-color: #fef2f2; color: #b91c1c; border-color: #fecaca !important;" title="User attempted to post anonymously. Identity unmasked for moderator disciplinary actions.">
+                                    <i class="fa-solid fa-user-secret me-1"></i> Posted Anonymously (Unmasked for Moderation)
+                                </span>
+                                {% endif %}
+                            </div>
                             <div class="text-muted fs-xs">
                                 <span>@{{ post.username }}</span>
                                 <span class="mx-1">&bull;</span>
@@ -67,7 +74,7 @@
                         <div class="p-4 rounded-3 border" style="background-color: #f1f5f9; border-color: #cbd5e1;">
                             <div class="row g-4">
                                 <!-- LIME Feature Attribution (Toxic vs Neutral/Supportive) -->
-                                <div class="col-lg-7">
+                                <div class="col-12">
                                     <h6 class="fw-bold text-dark small text-uppercase mb-2 d-flex align-items-center gap-2">
                                         <i class="fa-solid fa-highlighter text-warning"></i> LIME Feature Attribution (Token Weights)
                                     </h6>
@@ -91,28 +98,6 @@
                                         <span class="text-muted fs-xs">Model Architecture:</span>
                                         <span class="fw-semibold text-dark fs-xs ms-1">{{ post.moderation.model_used }}</span>
                                     </div>
-                                </div>
-
-                                <!-- Multimodal Screenshot & OCR Evidence (if present) -->
-                                <div class="col-lg-5">
-                                    {% if post.image_path %}
-                                        <h6 class="fw-bold text-dark small text-uppercase mb-2 d-flex align-items-center gap-2">
-                                            <i class="fa-solid fa-image text-info"></i> Attached Screenshot & OCR
-                                        </h6>
-                                        <div class="rounded-3 overflow-hidden border mb-2" style="max-height: 180px;">
-                                            <img src="{{ url_for('static', filename=post.image_path) }}" class="w-100" style="object-fit: cover; max-height: 180px;" alt="Post screenshot">
-                                        </div>
-                                        <div class="p-2 rounded-2 bg-white border text-dark fs-xs">
-                                            <strong>OCR Extracted Text:</strong>
-                                            <div class="font-monospace text-secondary mt-1">{{ post.moderation.ocr_text or 'No distinct text parsed' }}</div>
-                                        </div>
-                                    {% else %}
-                                        <div class="p-4 text-center rounded-3 bg-white border text-muted h-100 d-flex flex-column align-items-center justify-content-center">
-                                            <i class="fa-solid fa-font fs-3 mb-2 text-secondary"></i>
-                                            <span class="small">Text-only submission</span>
-                                            <span class="fs-xs opacity-75">No multimodal image attached</span>
-                                        </div>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -169,8 +154,8 @@
                                     <select name="reason" class="form-select text-dark border-secondary-subtle">
                                         <option value="Hate Speech & Direct Harassment" selected>Hate Speech & Direct Harassment</option>
                                         <option value="Abusive Language & Threatening Slurs">Abusive Language & Threatening Slurs</option>
-                                        <option value="Offensive Multimodal Screenshot">Offensive Multimodal Screenshot</option>
-                                        <option value="Targeted Cyberbullying Violation">Targeted Cyberbullying Violation</option>
+                                        <option value="Severe Cyberbullying / Hostility">Severe Cyberbullying / Hostility</option>
+                                        <option value="Targeted Harassment Violation">Targeted Harassment Violation</option>
                                     </select>
                                 </div>
                             </div>

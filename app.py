@@ -48,7 +48,6 @@ from src.topic_modeling import LDATopicModeler
 from src.multilingual import MultilingualProcessor
 from src.information_extraction import InformationExtractor
 from src.explainability import TokenExplainer
-from src.ocr_detector import ocr_detector
 from src.mongo_db import MongoDBManager
 
 genai_service = GenAIExplainer()
@@ -381,7 +380,7 @@ def feed():
 def create_post():
     """
     Submits a post/comment.
-    Scans with CyberShield AI + OCR (if screenshot attached) + LIME explainability.
+    Scans with CyberShield AI + LIME explainability.
     If hate speech is detected, quarantines post, alerts user, and routes to Admin Desk.
     """
     try:
@@ -394,6 +393,7 @@ def create_post():
             return redirect(url_for("feed"))
 
         content = request.form.get("content", "").strip()
+        is_anonymous = request.form.get("is_anonymous") in ("1", "true", "on", "yes")
         if not content:
             flash("Post content cannot be empty.", "warning")
             ref = request.referrer
@@ -401,39 +401,13 @@ def create_post():
                 return redirect(url_for("admin_feed"))
             return redirect(url_for("feed"))
 
-        image_file = request.files.get("image")
-        saved_image_rel_path = None
-        ocr_extracted_text = None
-
-        if image_file and image_file.filename:
-            try:
-                from werkzeug.utils import secure_filename
-                sec_name = secure_filename(image_file.filename)
-                timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-                fname = f"post_{timestamp_str}_{sec_name}"
-                save_path = os.path.join(UPLOAD_FOLDER, fname)
-                image_file.save(save_path)
-                saved_image_rel_path = f"uploads/{fname}"
-
-                # Extract OCR text from screenshot
-                ocr_res = ocr_detector.extract_text_and_boxes(save_path)
-                if ocr_res.get("text"):
-                    ocr_extracted_text = ocr_res["text"].strip()
-            except Exception as ocr_err:
-                logger.warning(f"OCR extraction error on post image: {ocr_err}")
-
-        # Build text for AI inference (text + OCR text if available)
-        combined_text_for_ai = content
-        if ocr_extracted_text:
-            combined_text_for_ai = f"{content} [Image Text]: {ocr_extracted_text}"
-
         # Run AI inference with resilient fallback
         try:
-            pred_res = predictor.predict(combined_text_for_ai)
+            pred_res = predictor.predict(content)
         except Exception as pred_err:
             logger.error(f"Inference error in create_post: {pred_err}", exc_info=True)
             fallback_predictor = CyberbullyingPredictor(model_type="logistic_regression")
-            pred_res = fallback_predictor.predict(combined_text_for_ai)
+            pred_res = fallback_predictor.predict(content)
 
         pred_label = pred_res.get("prediction", "Non-Bullying")
         confidence = pred_res.get("confidence", 0.5)
@@ -445,7 +419,7 @@ def create_post():
         # Run Token-Level XAI to highlight toxic words
         toxic_tokens = []
         try:
-            xai_data = token_explainer.explain(combined_text_for_ai, predictor=predictor)
+            xai_data = token_explainer.explain(content, predictor=predictor)
             for tok in xai_data.get("tokens", []):
                 tok_word = tok.get("word") or tok.get("token")
                 tok_weight = tok.get("weight", 0.0)
@@ -467,7 +441,6 @@ def create_post():
             "risk_score": risk_score,
             "model_used": SUPPORTED_MODELS.get(model_name, model_name),
             "toxic_tokens": toxic_tokens,
-            "ocr_text": ocr_extracted_text,
             "intercepted": is_hate
         }
 
@@ -476,8 +449,9 @@ def create_post():
             username=user["username"],
             display_name=user.get("display_name", user["username"]),
             content=content,
-            image_path=saved_image_rel_path,
-            moderation_info=moderation_info
+            image_path=None,
+            moderation_info=moderation_info,
+            is_anonymous=is_anonymous
         )
 
         # Record to MongoDB predictions collection for analytics
@@ -760,12 +734,15 @@ def admin_update_settings():
     admin_name = session.get("username", "admin")
 
     if requested_model == "distilbert":
-        flash(
-            "DistilBERT Transformer requires dedicated GPU hosting (>1GB RAM) and is disabled on free tier. "
-            "CyberShield is operating on the benchmark-validated TF-IDF + Logistic Regression model.",
-            "warning"
-        )
-        return redirect(url_for("admin_settings"))
+        is_render_cloud = bool(os.environ.get("RENDER"))
+        weights_exist = os.path.exists("models/distilbert/model.safetensors") or os.path.exists("models/distilbert/pytorch_model.bin")
+        if is_render_cloud or not weights_exist:
+            flash(
+                "DistilBERT Transformer requires dedicated GPU hosting (>1GB RAM) and is disabled on free-tier cloud deployment. "
+                "CyberShield is operating on the benchmark-validated TF-IDF + Logistic Regression model.",
+                "warning"
+            )
+            return redirect(url_for("admin_settings"))
 
     if requested_model in SUPPORTED_MODELS:
         try:
@@ -1017,136 +994,6 @@ def analyze():
     except Exception as err:
         logger.error(f"Prediction failed with unexpected error: {err}", exc_info=True)
         flash("An unexpected error occurred during analysis. Please try again.", "danger")
-        return redirect(url_for("index"))
-
-
-@app.route("/analyze-screenshot", methods=["POST"])
-def analyze_screenshot():
-    """
-    Multimodal OCR Endpoint: Extracts text from social media screenshots
-    and classifies toxicity, running token attribution and restorative GenAI.
-    """
-    if "screenshot" not in request.files:
-        flash("No screenshot file was provided. Please upload an image.", "warning")
-        return redirect(url_for("index"))
-
-    file = request.files["screenshot"]
-    if not file or file.filename == "":
-        flash("No file was selected. Please choose a screenshot image to analyze.", "warning")
-        return redirect(url_for("index"))
-
-    allowed_extensions = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in allowed_extensions:
-        flash(f"Invalid image format '{ext}'. Supported formats: PNG, JPG, JPEG, WEBP, BMP.", "danger")
-        return redirect(url_for("index"))
-
-    try:
-        import uuid
-        filename = f"screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}{ext}"
-        save_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(save_path)
-
-        # 1. OCR Extraction using Windows Media OCR Engine
-        ocr_result = ocr_detector.extract_text(save_path)
-        if not ocr_result["success"] or not ocr_result["extracted_text"]:
-            err_msg = ocr_result.get("error") or "No legible text was found in the screenshot."
-            flash(f"OCR Detection: {err_msg}", "warning")
-            return redirect(url_for("index"))
-
-        extracted_text = ocr_result["extracted_text"]
-        requested_model = request.form.get("model_type", app.config["MODEL_TYPE"]).strip().lower()
-
-        try:
-            active_predictor = CyberbullyingPredictor(model_type=requested_model)
-        except Exception:
-            active_predictor = predictor
-
-        # 2. Multilingual Normalization & Inference
-        normalized_text, is_hinglish, hinglish_glossary = multilingual_processor.normalize_and_translate(extracted_text)
-        lang_info = multilingual_processor.detect_language(extracted_text)
-
-        result = active_predictor.predict(normalized_text)
-        prediction_label = result.get("prediction", "Non-Bullying")
-        label = result.get("label", 1 if prediction_label == "Bullying" else 0)
-        is_bullying = (label == 1 or prediction_label == "Bullying")
-
-        raw_confidence = result.get("confidence", 0.5)
-        confidence_pct = round(raw_confidence * 100, 1) if raw_confidence <= 1.0 else round(raw_confidence, 1)
-
-        probabilities = result.get("probabilities")
-        if not probabilities:
-            prob_b = raw_confidence if raw_confidence <= 1.0 else raw_confidence / 100.0
-            probabilities = {
-                "Non-Bullying": round(1.0 - prob_b if is_bullying else prob_b, 4),
-                "Bullying": round(prob_b if is_bullying else 1.0 - prob_b, 4)
-            }
-
-        model_name_used = SUPPORTED_MODELS.get(active_predictor.model_type, active_predictor.model_type)
-        text_snippet = f"[Screenshot OCR] {extracted_text.strip()[:80]}"
-
-        user_id_val = session.get("user_id")
-
-        # 3. Store in SQLite
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO predictions (text_snippet, prediction, confidence, model_type, user_id, timestamp)
-            VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))
-            """,
-            (text_snippet, prediction_label, confidence_pct, model_name_used, user_id_val)
-        )
-        conn.commit()
-        record_id = cursor.lastrowid
-        conn.close()
-
-        # Store prediction in MongoDB
-        try:
-            MongoDBManager.save_prediction(
-                text_snippet=text_snippet,
-                prediction=prediction_label,
-                confidence=confidence_pct,
-                model_type=model_name_used,
-                user_id=user_id_val
-            )
-        except Exception as me:
-            logger.warning(f"Notice: Failed to log prediction to MongoDB: {me}")
-
-        # 4. Feature Attribution & GenAI
-        extracted_info = info_extractor.extract_information(extracted_text, is_bullying, confidence_pct)
-        topic_info = topic_modeler.predict_topic(extracted_text)
-        genai_data = genai_service.explain_and_rewrite(extracted_text, is_bullying)
-        xai_tokens = token_explainer.explain(extracted_text, active_predictor)
-
-        screenshot_url = url_for("static", filename=f"uploads/{filename}")
-
-        return render_template(
-            "result.html",
-            text=extracted_text,
-            text_snippet=text_snippet,
-            prediction=prediction_label,
-            is_bullying=is_bullying,
-            confidence=confidence_pct,
-            probabilities=probabilities,
-            model_type=model_name_used,
-            record_id=record_id,
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            genai=genai_data,
-            extracted_info=extracted_info,
-            topic_info=topic_info,
-            lang_info=lang_info,
-            is_hinglish=is_hinglish,
-            hinglish_glossary=hinglish_glossary,
-            xai_tokens=xai_tokens,
-            is_screenshot=True,
-            screenshot_url=screenshot_url,
-            ocr_meta=ocr_result
-        )
-
-    except Exception as err:
-        logger.error(f"Screenshot analysis failed: {err}", exc_info=True)
-        flash("An unexpected error occurred while processing the screenshot. Please try again.", "danger")
         return redirect(url_for("index"))
 
 

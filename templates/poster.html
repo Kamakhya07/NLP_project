@@ -141,32 +141,32 @@
         <!-- HEADER -->
         <div class="poster-header">
             <h1 class="display-6 fw-extrabold mb-1" style="color: #ffffff; letter-spacing: -0.02em;">
-                🛡️ CYBERSHIELD: CONTEXTUAL NLP & MULTIMODAL CYBERBULLYING INTERCEPTION
+                🛡️ CYBERSHIELD: CONTEXTUAL NLP & CYBERBULLYING INTERCEPTION
             </h1>
             <p class="fs-6 mb-2" style="color: #ded5c5;">
-                Real-Time Social Media Moderation, Screenshot OCR, LIME Feature Attribution & SaaS Administration
+                Real-Time Social Media Moderation, LIME Feature Attribution & SaaS Administration
             </p>
             <div class="d-flex justify-content-center gap-4 flex-wrap small pt-2 border-top border-secondary-subtle" style="color: #c4b69f;">
                 <span><strong>Author:</strong> Kamakhya Kanzade</span>
                 <span><strong>Specialization:</strong> Final-Year Natural Language Processing (NLP) & System Architecture</span>
-                <span><strong>Tech Stack:</strong> Python, Flask, PyTorch/DistilBERT, Scikit-Learn, LIME, MongoDB, Windows OCR</span>
+                <span><strong>Tech Stack:</strong> Python, Flask, PyTorch/DistilBERT, Scikit-Learn, LIME, MongoDB, SQLite</span>
                 <span><strong>GitHub:</strong> github.com/Kamakhya07/NLP_project</span>
             </div>
         </div>
 
         <!-- 3-COLUMN ACADEMIC LAYOUT -->
         <div class="row g-3">
-            <!-- COLUMN 1: Background, Problem, Dataset & Multimodal OCR -->
+            <!-- COLUMN 1: Background, Problem, Dataset & Multilingual Normalization -->
             <div class="col-lg-4 d-flex flex-column gap-3">
                 <div class="section-card">
                     <div class="section-title">
                         <i class="fa-solid fa-bullseye"></i> 1. Problem & Objectives
                     </div>
                     <p class="small text-light-emphasis mb-2">
-                        Online harassment across social networks causes severe psychological trauma. Traditional keyword blocklists fail against obfuscated text, Hinglish transliterations, sarcasm, and offensive images/screenshots.
+                        Online harassment across social networks causes severe psychological trauma. Traditional keyword blocklists fail against obfuscated text, Hinglish transliterations, sarcasm, and evolving internet slang.
                     </p>
                     <p class="small text-light-emphasis mb-0">
-                        <strong>Core Objective:</strong> Build a high-throughput, multi-stage NLP safety pipeline capable of real-time tweet interception, token-level explainability, multimodal screenshot OCR, and full administrative governance.
+                        <strong>Core Objective:</strong> Build a high-throughput, multi-stage NLP safety pipeline capable of real-time tweet interception, token-level explainability, Hinglish normalization, and full administrative governance.
                     </p>
                 </div>
 
@@ -189,15 +189,15 @@
 
                 <div class="section-card">
                     <div class="section-title">
-                        <i class="fa-solid fa-camera-retro"></i> 3. Multimodal Screenshot OCR
+                        <i class="fa-solid fa-language"></i> 3. Multilingual & Hinglish Normalization
                     </div>
                     <p class="small text-light-emphasis mb-2">
-                        Integrated a local <strong>Windows Native OCR Engine</strong> allowing direct upload of social screenshots (Twitter, Instagram, WhatsApp, Reddit):
+                        Integrated a dedicated <strong>Multilingual Normalization Processor</strong> handling code-mixed social media text:
                     </p>
                     <ul class="small mb-2 ps-3 text-light-emphasis">
-                        <li><strong>Direct Image Parsing:</strong> Supports PNG, JPG, WEBP formats.</li>
-                        <li><strong>Text Extraction:</strong> Cleans bounding boxes and normalizes extracted multiline text.</li>
-                        <li><strong>Automated Classification:</strong> Extracted strings are fed into the active NLP model and LIME explainer with side-by-side visual previews.</li>
+                        <li><strong>Slang & Transliteration:</strong> Normalizes phonetic Hinglish phrases to canonical semantic tokens.</li>
+                        <li><strong>Polysemy Disambiguation:</strong> Protects friendly banter and colloquial expressions from false positive flags.</li>
+                        <li><strong>Sentiment Signal Preservation:</strong> Retains punctuation and capitalization cues for high-fidelity classification.</li>
                     </ul>
                 </div>
             </div>
@@ -210,9 +210,19 @@
                     </div>
                     <div class="p-2 rounded border mb-2 text-center" style="background-color: #1a1412; border-color: #4d3625 !important;">
                         <code class="small d-block text-start font-monospace" style="color: #dbe4c7; font-size: 0.78rem;">
-                            [User Text Input / Social Media Screenshot]<br/>
+                            [User Social Media Text Input]<br/>
                             &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
-                            [Windows Native OCR Engine] (if image uploaded)<br/>
+                            [Multilingual Normalization & Hinglish Glossary]<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+                            [NLP Feature Extraction: TF-IDF / Subword Tokenizer]<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+                            [Classifiers: LogReg | Platt Linear SVM | DistilBERT]<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+                            [Decision Threshold & Confidence Scoring]<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
+                            Safe: Published to Feed &nbsp;|&nbsp; Bullying: Intercepted to Admin Desk
+                        </code>
+                    </div>
                             &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>
                             [NLP Normalization & TF-IDF / Subword Tokenizer]<br/>
                             &nbsp;&nbsp;&nbsp;&nbsp;↓<br/>

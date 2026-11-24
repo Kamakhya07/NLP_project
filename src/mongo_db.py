@@ -553,7 +553,8 @@ class MongoDBManager:
         display_name: str,
         content: str,
         image_path: Optional[str] = None,
-        moderation_info: Optional[Dict[str, Any]] = None
+        moderation_info: Optional[Dict[str, Any]] = None,
+        is_anonymous: bool = False
     ) -> Dict[str, Any]:
         """
         Creates a post. If moderation_info indicates cyberbullying, status is 'quarantined',
@@ -571,6 +572,7 @@ class MongoDBManager:
             "display_name": display_name,
             "content": content.strip(),
             "image_path": image_path,
+            "is_anonymous": bool(is_anonymous),
             "status": "quarantined" if is_quarantined else "published",
             "created_at": datetime.utcnow(),
             "likes_count": 0,

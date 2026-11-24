@@ -155,52 +155,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // -------------------------------------------------------------------------
-    // 7. Screenshot OCR Upload & Preview Handler
+    // 7. Model Selection Sync Handler
     // -------------------------------------------------------------------------
-    const screenshotFileInput = document.getElementById("screenshotFile");
-    const previewWrapper = document.getElementById("screenshotPreviewWrapper");
-    const previewImg = document.getElementById("screenshotPreviewImg");
-    const previewFileName = document.getElementById("screenshotFileName");
-    const dropzonePrompt = document.getElementById("dropzonePrompt");
     const modelSelect = document.getElementById("modelSelect");
-    const screenshotModelInput = document.getElementById("screenshotModelInput");
     const textModelInput = document.getElementById("textModelInput");
-    const screenshotForm = document.getElementById("screenshotForm");
-    const ocrAnalyzeBtn = document.getElementById("ocrAnalyzeBtn");
-    const ocrSpinner = document.getElementById("ocrSpinner");
-    const ocrBtnText = document.getElementById("ocrBtnText");
-
-    // Sync model selection
-    if (modelSelect) {
+    if (modelSelect && textModelInput) {
         modelSelect.addEventListener("change", () => {
-            if (screenshotModelInput) screenshotModelInput.value = modelSelect.value;
-            if (textModelInput) textModelInput.value = modelSelect.value;
-        });
-    }
-
-    // Instant Image Preview
-    if (screenshotFileInput && previewWrapper && previewImg) {
-        screenshotFileInput.addEventListener("change", (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    previewImg.src = event.target.result;
-                    if (previewFileName) previewFileName.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-                    previewWrapper.classList.remove("d-none");
-                    if (dropzonePrompt) dropzonePrompt.classList.add("d-none");
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    // Screenshot form submit loading spinner
-    if (screenshotForm && ocrAnalyzeBtn) {
-        screenshotForm.addEventListener("submit", () => {
-            ocrAnalyzeBtn.disabled = true;
-            if (ocrSpinner) ocrSpinner.classList.remove("d-none");
-            if (ocrBtnText) ocrBtnText.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Performing OCR & Analyzing...';
+            textModelInput.value = modelSelect.value;
         });
     }
 });
