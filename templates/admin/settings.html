@@ -11,61 +11,29 @@
 </div>
 
 <div class="row g-4">
-    <!-- AI Architecture Switcher -->
+    <!-- Notice Card: Granular Model Inspection Moved to Moderation Queue -->
     <div class="col-lg-7">
         <div class="saas-card p-4 mb-4">
             <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                <i class="fa-solid fa-microchip text-primary"></i> Active Model Architecture
+                <i class="fa-solid fa-microchip text-primary"></i> Per-Comment Model Inspection
             </h5>
-            <p class="text-secondary small mb-3">Select the active machine learning or deep transformer model used for social media post interception.</p>
+            <p class="text-secondary small mb-3">Model switching is now performed interactively on each individual comment in the Moderation Queue.</p>
 
-            <form action="{{ url_for('admin_update_settings') }}" method="POST">
-                <div class="d-flex flex-column gap-3 mb-4">
-                    <!-- Logistic Regression -->
-                    <label class="p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer {% if current_model_key == 'logistic_regression' %}border-dark bg-light{% else %}border-secondary-subtle bg-white{% endif %}" style="cursor: pointer;">
-                        <input type="radio" name="model_type" value="logistic_regression" class="mt-1" {% if current_model_key == 'logistic_regression' %}checked{% endif %}>
-                        <div class="flex-grow-1">
-                            <div class="fw-bold text-dark small">TF-IDF + Logistic Regression (Recommended Baseline)</div>
-                            <div class="text-secondary fs-xs">Fast inference (~4ms), high interpretability, 74.37% benchmark accuracy on TweetEval.</div>
+            <div class="alert alert-info border-0 rounded-3 p-3 mb-4">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="fa-solid fa-circle-info fs-5 mt-1 text-primary"></i>
+                    <div>
+                        <div class="fw-bold text-dark small">Granular Multi-Model Testing Active</div>
+                        <div class="text-secondary fs-xs">
+                            Moderators can now directly switch between <strong>TF-IDF + Logistic Regression</strong>, <strong>Linear SVM</strong>, and <strong>DistilBERT</strong> for each comment directly inside the Moderation Queue to compare confidence percentages and token attributions in real time.
                         </div>
-                        <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: var(--coffee-warm); color: #ffffff;">Ultra Fast</span>
-                    </label>
-
-                    <!-- Linear SVM -->
-                    <label class="p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer {% if current_model_key == 'svm' %}border-dark bg-light{% else %}border-secondary-subtle bg-white{% endif %}" style="cursor: pointer;">
-                        <input type="radio" name="model_type" value="svm" class="mt-1" {% if current_model_key == 'svm' %}checked{% endif %}>
-                        <div class="flex-grow-1">
-                            <div class="fw-bold text-dark small">TF-IDF + Linear SVM (Platt Calibrated)</div>
-                            <div class="text-secondary fs-xs">Max-margin hyperplane classifier wrapped with sigmoid calibration, 73.13% accuracy.</div>
-                        </div>
-                        <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: var(--olive-medium); color: #ffffff;">Calibrated</span>
-                    </label>
-
-                    <!-- DistilBERT -->
-                    <label class="p-3 rounded-3 border d-flex align-items-start gap-3 cursor-pointer {% if current_model_key == 'distilbert' %}border-dark bg-light{% else %}border-secondary-subtle bg-white{% endif %}" style="cursor: pointer;">
-                        <input type="radio" name="model_type" value="distilbert" class="mt-1" {% if current_model_key == 'distilbert' %}checked{% endif %}>
-                        <div class="flex-grow-1">
-                            <div class="fw-bold text-dark small">Fine-Tuned DistilBERT Transformer</div>
-                            <div class="text-secondary fs-xs">6-layer bidirectional Transformer encoder with contextual self-attention, 76.80% accuracy.</div>
-                        </div>
-                        <span class="badge rounded-pill fs-xs px-2 py-1" style="background-color: #b47a1e; color: #ffffff;">Deep Context</span>
-                    </label>
-                </div>
-
-                <!-- Interception Threshold Slider -->
-                <div class="mb-4 pt-3 border-top">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="form-label text-dark small fw-bold mb-0">Hate Interception Threshold</label>
-                        <span class="badge fs-xs" id="thresholdValue" style="background-color: var(--coffee-warm); color: #ffffff;">50%</span>
                     </div>
-                    <p class="text-secondary fs-xs mb-2">Any post with a cyberbullying probability above this threshold is quarantined.</p>
-                    <input type="range" class="form-range" min="40" max="90" step="5" value="50" id="thresholdRange" oninput="document.getElementById('thresholdValue').innerText = this.value + '%'">
                 </div>
+            </div>
 
-                <button type="submit" class="btn btn-saas-primary fw-semibold px-4">
-                    <i class="fa-solid fa-floppy-disk me-1"></i> Save Configuration
-                </button>
-            </form>
+            <a href="{{ url_for('admin_queue') }}" class="btn btn-saas-primary fw-semibold px-4">
+                <i class="fa-solid fa-shield-virus me-1"></i> Open Moderation Queue
+            </a>
         </div>
     </div>
 

@@ -45,13 +45,13 @@
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-danger text-light rounded-pill px-3 py-2 fw-semibold">
+                        <span class="badge bg-danger text-light rounded-pill px-3 py-2 fw-semibold" id="verdict-badge-{{ post._id }}">
                             <i class="fa-solid fa-shield-virus me-1"></i> Cyberbullying ({{ ((post.moderation.confidence or 0.9)|float * 100)|round(1) }}%)
                         </span>
-                        <span class="badge {% if post.moderation.risk_score == 'High' %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-warning-subtle text-warning border border-warning-subtle{% endif %} rounded-pill px-3 py-2 fw-semibold">
+                        <span class="badge {% if post.moderation.risk_score == 'High' %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-warning-subtle text-warning border border-warning-subtle{% endif %} rounded-pill px-3 py-2 fw-semibold" id="risk-badge-{{ post._id }}">
                             Risk: {{ post.moderation.risk_score or 'High' }}
                         </span>
-                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 fw-semibold">
+                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 fw-semibold" id="status-badge-{{ post._id }}">
                             Status: Quarantined
                         </span>
                     </div>
@@ -60,6 +60,41 @@
                 <!-- Flagged Comment Text -->
                 <div class="p-3 rounded-3 mb-3 border font-monospace" style="background-color: #f8fafc; border-color: #e2e8f0; font-size: 0.95rem; color: #1e293b;">
                     {{ post.content }}
+                </div>
+
+                <!-- Interactive Per-Comment Model Architecture Switcher -->
+                <div class="p-3 rounded-3 mb-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold fs-xs text-uppercase text-secondary d-flex align-items-center gap-1">
+                                <i class="fa-solid fa-microchip text-primary"></i> Evaluate Under Model:
+                            </span>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Model Selector">
+                                <button type="button" 
+                                    class="btn btn-sm model-btn-{{ post._id }} {% if not post.moderation.model_used or 'Logistic' in post.moderation.model_used %}btn-dark active{% else %}btn-outline-secondary{% endif %}"
+                                    onclick="switchCommentModel('{{ post._id }}', 'logistic_regression', this)">
+                                    <i class="fa-solid fa-bolt me-1 text-warning"></i> Logistic Reg
+                                </button>
+                                <button type="button" 
+                                    class="btn btn-sm model-btn-{{ post._id }} {% if post.moderation.model_used and 'SVM' in post.moderation.model_used %}btn-dark active{% else %}btn-outline-secondary{% endif %}"
+                                    onclick="switchCommentModel('{{ post._id }}', 'svm', this)">
+                                    <i class="fa-solid fa-scale-balanced me-1 text-info"></i> Linear SVM
+                                </button>
+                                <button type="button" 
+                                    class="btn btn-sm model-btn-{{ post._id }} {% if post.moderation.model_used and 'DistilBERT' in post.moderation.model_used %}btn-dark active{% else %}btn-outline-secondary{% endif %}"
+                                    onclick="switchCommentModel('{{ post._id }}', 'distilbert', this)">
+                                    <i class="fa-solid fa-brain me-1" style="color: #c084fc;"></i> DistilBERT
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="spinner-border spinner-border-sm text-primary d-none" id="spinner-{{ post._id }}" role="status"></span>
+                            <span class="fs-xs text-muted" id="model-label-{{ post._id }}">
+                                Active Evaluation: <strong class="text-dark">{{ post.moderation.model_used }}</strong>
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Collapsible "View AI Evidence" Accordion -->
@@ -80,7 +115,7 @@
                                     </h6>
                                     <p class="text-muted fs-xs mb-3">Red badges indicate positive cyberbullying triggers; green badges indicate mitigating/contextual tokens.</p>
 
-                                    <div class="d-flex flex-wrap gap-2">
+                                    <div class="d-flex flex-wrap gap-2" id="tokens-container-{{ post._id }}">
                                         {% if post.moderation and post.moderation.toxic_tokens %}
                                             {% for t in post.moderation.toxic_tokens %}
                                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fs-xs d-flex align-items-center gap-2">
@@ -96,7 +131,7 @@
 
                                     <div class="mt-3 pt-3 border-top border-secondary-subtle">
                                         <span class="text-muted fs-xs">Model Architecture:</span>
-                                        <span class="fw-semibold text-dark fs-xs ms-1">{{ post.moderation.model_used }}</span>
+                                        <span class="fw-semibold text-dark fs-xs ms-1" id="model-arch-{{ post._id }}">{{ post.moderation.model_used }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -112,10 +147,10 @@
 
                     <div class="d-flex align-items-center gap-2">
                         <!-- 1. Approve (Green) -->
-                        <form action="{{ url_for('admin_approve_post', post_id=post._id) }}" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-saas-approve d-flex align-items-center gap-2" onclick="return confirm('Approve and publish this post to the public feed?');">
+                        <form action="{{ url_for('admin_approve_post', post_id=post._id) }}" method="POST" class="d-inline" id="approve-form-{{ post._id }}">
+                            <button type="submit" class="btn btn-saas-approve d-flex align-items-center gap-2" id="approve-btn-{{ post._id }}" onclick="return confirm('Publish this comment onto the live public feed?');">
                                 <i class="fa-solid fa-check"></i>
-                                <span>Approve</span>
+                                <span id="approve-text-{{ post._id }}">Approve & Publish to Feed</span>
                             </button>
                         </form>
 
@@ -207,4 +242,116 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+async function switchCommentModel(postId, modelType, btnEl) {
+    const spinner = document.getElementById(`spinner-${postId}`);
+    if (spinner) spinner.classList.remove('d-none');
+    
+    // Highlight selected model button
+    document.querySelectorAll(`.model-btn-${postId}`).forEach(b => {
+        b.classList.remove('btn-dark', 'active');
+        b.classList.add('btn-outline-secondary');
+    });
+    btnEl.classList.remove('btn-outline-secondary');
+    btnEl.classList.add('btn-dark', 'active');
+
+    try {
+        const resp = await fetch(`/admin/post/${postId}/re-evaluate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ model_type: modelType })
+        });
+        const data = await resp.json();
+        if (!data.success) {
+            alert('Failed to evaluate comment with model: ' + (data.error || 'Unknown error'));
+            return;
+        }
+
+        const card = document.getElementById(`post-card-${postId}`);
+        const verdictBadge = document.getElementById(`verdict-badge-${postId}`);
+        const riskBadge = document.getElementById(`risk-badge-${postId}`);
+        const statusBadge = document.getElementById(`status-badge-${postId}`);
+        const modelLabel = document.getElementById(`model-label-${postId}`);
+        const modelArch = document.getElementById(`model-arch-${postId}`);
+        const tokensContainer = document.getElementById(`tokens-container-${postId}`);
+        const approveBtn = document.getElementById(`approve-btn-${postId}`);
+        const approveText = document.getElementById(`approve-text-${postId}`);
+
+        if (modelLabel) {
+            modelLabel.innerHTML = `Active Evaluation: <strong class="text-dark">${data.model_used}</strong>`;
+        }
+        if (modelArch) {
+            modelArch.innerText = data.model_used;
+        }
+
+        if (data.is_bullying) {
+            if (card) card.style.borderLeft = '5px solid var(--danger-color)';
+            if (verdictBadge) {
+                verdictBadge.className = 'badge bg-danger text-light rounded-pill px-3 py-2 fw-semibold';
+                verdictBadge.innerHTML = `<i class="fa-solid fa-shield-virus me-1"></i> Cyberbullying (${data.confidence}%)`;
+            }
+            if (riskBadge) {
+                riskBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold';
+                riskBadge.innerText = `Risk: ${data.risk_score}`;
+            }
+            if (statusBadge) {
+                statusBadge.className = 'badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 fw-semibold';
+                statusBadge.innerText = 'Status: Quarantined';
+            }
+            if (approveBtn) {
+                approveBtn.className = 'btn btn-saas-approve d-flex align-items-center gap-2';
+            }
+            if (approveText) {
+                approveText.innerText = 'Approve';
+            }
+        } else {
+            // Evaluated Safe under this model!
+            if (card) card.style.borderLeft = '5px solid var(--success-color)';
+            if (verdictBadge) {
+                verdictBadge.className = 'badge bg-success text-light rounded-pill px-3 py-2 fw-semibold';
+                verdictBadge.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> Verified Safe (${data.confidence}%)`;
+            }
+            if (riskBadge) {
+                riskBadge.className = 'badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold';
+                riskBadge.innerText = 'Risk: Safe';
+            }
+            if (statusBadge) {
+                statusBadge.className = 'badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold';
+                statusBadge.innerHTML = `<i class="fa-solid fa-check me-1"></i> Evaluated Safe (${data.model_used})`;
+            }
+            // Emphasize the direct post to feed button!
+            if (approveBtn) {
+                approveBtn.className = 'btn btn-success d-flex align-items-center gap-2 shadow-sm fw-bold';
+            }
+            if (approveText) {
+                approveText.innerHTML = `<span>Safe! Direct Post to Feed</span>`;
+            }
+        }
+
+        // Update LIME tokens
+        if (tokensContainer) {
+            if (data.toxic_tokens && data.toxic_tokens.length > 0) {
+                tokensContainer.innerHTML = data.toxic_tokens.map(t => `
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fs-xs d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <strong class="fs-6">"${t.token}"</strong>
+                        <span class="opacity-75">weight: +${t.score}</span>
+                    </span>
+                `).join('');
+            } else {
+                tokensContainer.innerHTML = `<span class="text-secondary small">Model classified sentence without high-weight individual triggers under this architecture.</span>`;
+            }
+        }
+
+    } catch (err) {
+        console.error('Error switching model:', err);
+        alert('Network or server error while evaluating comment.');
+    } finally {
+        if (spinner) spinner.classList.add('d-none');
+    }
+}
+</script>
 {% endblock %}

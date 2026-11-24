@@ -705,6 +705,27 @@ class MongoDBManager:
             return True
         return False
 
+    @classmethod
+    def update_post_moderation(cls, post_id: str, moderation_info: Dict[str, Any]) -> bool:
+        """Updates the moderation evaluation data for a post."""
+        try:
+            res = cls.posts_col().update_one(
+                {"_id": ObjectId(post_id)},
+                {"$set": {"moderation": moderation_info}}
+            )
+            return res.matched_count > 0
+        except Exception as e:
+            logger.warning(f"Failed to update post moderation: {e}")
+            return False
+
+    @classmethod
+    def clear_all_posts(cls) -> None:
+        """Clears all posts and user notifications for a clean demo feed slate."""
+        cls.posts_col().delete_many({})
+        cls.notifications_col().delete_many({})
+        cls.predictions_col().delete_many({})
+        cls.users_col().update_many({}, {"$set": {"strikes_count": 0, "status": "active"}})
+
     # --------------------------------------------------------------------------
     # Notifications Management
     # --------------------------------------------------------------------------

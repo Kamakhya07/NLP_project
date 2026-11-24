@@ -713,56 +713,75 @@ def admin_activity():
 @app.route("/admin/settings")
 @admin_required
 def admin_settings():
-    """7. System Settings: Model architecture selection, sensitivity threshold, diagnostics."""
-    pending_quarantined_count = len(MongoDBManager.get_quarantined_posts())
-
-    return render_template(
-        "admin/settings.html",
-        active_tab="settings",
-        current_model_key=predictor.model_type,
-        current_model_name=SUPPORTED_MODELS.get(predictor.model_type, predictor.model_type),
-        pending_quarantined_count=pending_quarantined_count
-    )
+    """Redirect to moderation queue as per-comment model inspection is directly integrated."""
+    return redirect(url_for("admin_queue"))
 
 
-@app.route("/admin/settings/update", methods=["POST"])
+@app.route("/admin/post/<post_id>/re-evaluate", methods=["POST"])
 @admin_required
-def admin_update_settings():
-    """Switches active model architecture dynamically."""
-    global predictor
-    requested_model = request.form.get("model_type", "").strip().lower()
-    admin_name = session.get("username", "admin")
+def admin_re_evaluate_post(post_id):
+    """
+    Dynamically tests a specific quarantined post under a selected model architecture (Logistic Regression, SVM, DistilBERT).
+    Returns real-time classification verdict, confidence percentage, and LIME token attribution.
+    """
+    try:
+        post = MongoDBManager.get_post_by_id(post_id)
+        if not post:
+            return jsonify({"success": False, "error": "Post not found"}), 404
 
-    if requested_model == "distilbert":
-        is_render_cloud = bool(os.environ.get("RENDER"))
-        weights_exist = os.path.exists("models/distilbert/model.safetensors") or os.path.exists("models/distilbert/pytorch_model.bin")
-        if is_render_cloud or not weights_exist:
-            flash(
-                "DistilBERT Transformer requires dedicated GPU hosting (>1GB RAM) and is disabled on free-tier cloud deployment. "
-                "CyberShield is operating on the benchmark-validated TF-IDF + Logistic Regression model.",
-                "warning"
-            )
-            return redirect(url_for("admin_settings"))
+        data = request.get_json(silent=True) or request.form
+        requested_model = data.get("model_type", "logistic_regression").strip().lower()
+        if requested_model not in SUPPORTED_MODELS:
+            requested_model = "logistic_regression"
 
-    if requested_model in SUPPORTED_MODELS:
+        content = post.get("content", "")
+        eval_predictor = CyberbullyingPredictor(model_type=requested_model)
+        pred_res = eval_predictor.predict(content)
+
+        pred_label = pred_res.get("prediction", "Non-Bullying")
+        confidence = float(pred_res.get("confidence", 0.5))
+        is_bullying = (pred_label == "Bullying")
+        conf_pct = round(confidence * 100, 1)
+
+        # Run token-level XAI feature attribution
+        toxic_tokens = []
         try:
-            predictor = CyberbullyingPredictor(model_type=requested_model)
-            app.config["MODEL_TYPE"] = requested_model
-            MongoDBManager.log_activity(
-                admin_username=admin_name,
-                action="change_setting",
-                target_type="system",
-                target_id="active_model",
-                details=f"Switched active AI engine to {SUPPORTED_MODELS[requested_model]}"
-            )
-            flash(f"Active AI engine successfully switched to {SUPPORTED_MODELS[requested_model]}.", "success")
-        except Exception as e:
-            logger.error(f"Failed to switch model to '{requested_model}': {e}")
-            flash(f"Failed to switch model to {requested_model}: {e}", "danger")
-    else:
-        flash("Unsupported model selection.", "warning")
+            xai_data = token_explainer.explain(content, predictor=eval_predictor)
+            for tok in xai_data.get("tokens", []):
+                tok_word = tok.get("word") or tok.get("token")
+                tok_weight = tok.get("weight", 0.0)
+                if tok_word and tok_weight > 0.01:
+                    toxic_tokens.append({"token": tok_word, "score": round(tok_weight, 4)})
+        except Exception as xerr:
+            logger.warning(f"XAI error in admin_re_evaluate_post: {xerr}")
 
-    return redirect(url_for("admin_settings"))
+        risk_score = "High" if (is_bullying and confidence >= 0.8) else ("Medium" if is_bullying else "Safe")
+        model_name = SUPPORTED_MODELS.get(requested_model, requested_model)
+
+        moderation_update = {
+            "prediction": pred_label,
+            "confidence": confidence,
+            "risk_score": risk_score,
+            "model_used": model_name,
+            "toxic_tokens": toxic_tokens,
+            "intercepted": is_bullying
+        }
+        MongoDBManager.update_post_moderation(post_id, moderation_update)
+
+        return jsonify({
+            "success": True,
+            "post_id": str(post_id),
+            "prediction": pred_label,
+            "is_bullying": is_bullying,
+            "confidence": conf_pct,
+            "risk_score": risk_score,
+            "model_used": model_name,
+            "model_key": requested_model,
+            "toxic_tokens": toxic_tokens
+        })
+    except Exception as err:
+        logger.error(f"Error re-evaluating post {post_id}: {err}", exc_info=True)
+        return jsonify({"success": False, "error": str(err)}), 500
 
 
 @app.route("/admin/post/<post_id>/approve", methods=["POST"])
